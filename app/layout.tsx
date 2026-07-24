@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Fredoka, Nunito } from "next/font/google";
+import { AuthSessionRefresh } from "@/components/auth-session-refresh";
 import { Providers } from "@/components/providers";
 import { APP_NAME } from "@/lib/constants";
 import "./globals.css";
@@ -39,7 +40,10 @@ export default function RootLayout({
         >
           Bỏ qua đến nội dung chính
         </a>
-        <Providers>{children}</Providers>
+        <Providers>
+          <AuthSessionRefresh />
+          {children}
+        </Providers>
       </body>
     </html>
   );
