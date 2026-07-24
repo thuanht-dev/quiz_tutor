@@ -41,19 +41,28 @@ SUPABASE_SERVICE_ROLE_KEY=...
    - `supabase/migrations/20260324000002_rls_and_rpc.sql`
    - `supabase/seed.sql` (môn / quiz / câu hỏi mẫu)
 
-3. Tạo user Auth + profiles:
+3. Seed dữ liệu:
 
 ```bash
-npm run seed:auth
+npm run seed:all
 ```
 
-Tạo: `admin/admin123`, `minh/minh123`, `lan/lan123`, `tuan/tuan123`  
+- `seed:auth` → users: `admin/admin123`, `minh/minh123`, …
+- `seed:content` → môn / quiz / câu hỏi mẫu
+- `check:db` → đếm số dòng các bảng
+
 (Email nội bộ dạng `{username}@students.local`)
 
 4. Auth settings (Dashboard → Authentication → Providers → Email):
-   - Tắt **Confirm email** (hoặc confirm sẵn qua Admin API — script đã `email_confirm: true`)
+   - Tắt **Confirm email** (script đã set `email_confirm: true`)
 
-5. `npm run dev` → `/login`
+5. Restart app:
+
+```bash
+npm run dev
+```
+
+→ `/login` với `admin` / `admin123`
 
 ## Cấu trúc chính
 

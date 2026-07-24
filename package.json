@@ -7,7 +7,10 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed:auth": "tsx scripts/seed-auth.ts"
+    "seed:auth": "tsx scripts/seed-auth.ts",
+    "seed:content": "tsx scripts/seed-content.ts",
+    "seed:all": "tsx scripts/seed-auth.ts && tsx scripts/seed-content.ts",
+    "check:db": "tsx scripts/check-db.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.6.0",
