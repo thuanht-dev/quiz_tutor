@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { motion } from "framer-motion";
 import { Inbox, AlertTriangle, type LucideIcon } from "lucide-react";
@@ -23,11 +23,11 @@ export function EmptyState({
       initial={{ opacity: 0, y: 8 }}
       animate={{ opacity: 1, y: 0 }}
       className={cn(
-        "flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-sky-200 bg-sky-50/60 px-6 py-14 text-center",
+        "flex flex-col items-center justify-center gap-3 rounded-3xl border border-dashed border-teal-200 bg-teal-50/60 px-6 py-14 text-center",
         className
       )}
     >
-      <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-sky-500 shadow-sm">
+      <div className="flex size-14 items-center justify-center rounded-2xl bg-white text-teal-500 shadow-sm">
         <Icon className="size-7" />
       </div>
       <div>

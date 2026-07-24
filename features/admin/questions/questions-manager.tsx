@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRef, useState } from "react";
 import Link from "next/link";
@@ -283,7 +283,7 @@ function ImportDialog({
     >
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="font-display text-xl text-sky-700">
+          <DialogTitle className="font-display text-xl text-teal-700">
             Nhập câu hỏi từ file
           </DialogTitle>
         </DialogHeader>
@@ -301,7 +301,7 @@ function ImportDialog({
                 })) ?? []
               }
             >
-              <SelectTrigger className="h-11 w-full rounded-xl border-sky-100">
+              <SelectTrigger className="h-11 w-full rounded-xl border-teal-100">
                 <SelectValue placeholder="Chọn môn học" />
               </SelectTrigger>
               <SelectContent>
@@ -314,7 +314,7 @@ function ImportDialog({
             </Select>
           </div>
 
-          <div className="grid grid-cols-3 gap-1 rounded-2xl border border-sky-100 bg-sky-50/80 p-1">
+          <div className="grid grid-cols-3 gap-1 rounded-2xl border border-teal-100 bg-teal-50/80 p-1">
             {(
               [
                 { id: "file" as const, label: "CSV / Excel" },
@@ -328,8 +328,8 @@ function ImportDialog({
                 className={cn(
                   "rounded-xl px-2 py-2.5 text-sm font-bold transition",
                   mode === tab.id
-                    ? "bg-white text-sky-700 shadow-sm ring-1 ring-sky-100"
-                    : "text-slate-500 hover:text-sky-600"
+                    ? "bg-white text-teal-700 shadow-sm ring-1 ring-teal-100"
+                    : "text-slate-500 hover:text-teal-600"
                 )}
                 onClick={() => setMode(tab.id)}
               >
@@ -342,28 +342,28 @@ function ImportDialog({
             <button
               type="button"
               onClick={downloadCsvTemplate}
-              className="inline-flex items-center gap-1.5 rounded-full border border-sky-100 bg-white px-3 py-1.5 font-semibold text-sky-700 transition hover:bg-sky-50"
+              className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-white px-3 py-1.5 font-semibold text-teal-700 transition hover:bg-teal-50"
             >
               <Download className="size-3.5" /> CSV mẫu
             </button>
             <button
               type="button"
               onClick={downloadXlsxTemplate}
-              className="inline-flex items-center gap-1.5 rounded-full border border-sky-100 bg-white px-3 py-1.5 font-semibold text-sky-700 transition hover:bg-sky-50"
+              className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-white px-3 py-1.5 font-semibold text-teal-700 transition hover:bg-teal-50"
             >
               <Download className="size-3.5" /> Excel mẫu
             </button>
             <a
               href="/samples/docx-format-huong-dan.txt"
               download
-              className="inline-flex items-center gap-1.5 rounded-full border border-sky-100 bg-white px-3 py-1.5 font-semibold text-sky-700 transition hover:bg-sky-50"
+              className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-white px-3 py-1.5 font-semibold text-teal-700 transition hover:bg-teal-50"
             >
               <FileType2 className="size-3.5" /> HD Word
             </a>
             <a
               href="/samples/chatgpt-import-huong-dan.txt"
               download
-              className="inline-flex items-center gap-1.5 rounded-full border border-sky-100 bg-white px-3 py-1.5 font-semibold text-sky-700 transition hover:bg-sky-50"
+              className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-white px-3 py-1.5 font-semibold text-teal-700 transition hover:bg-teal-50"
             >
               <Sparkles className="size-3.5" /> HD ChatGPT
             </a>
@@ -374,9 +374,9 @@ function ImportDialog({
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex w-full flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-sky-200 bg-white px-4 py-8 text-center transition hover:border-sky-300 hover:bg-sky-50/50"
+                className="flex w-full flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-teal-200 bg-white px-4 py-8 text-center transition hover:border-teal-300 hover:bg-teal-50/50"
               >
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+                <span className="flex size-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-600">
                   <UploadCloud className="size-6" />
                 </span>
                 <span className="text-sm font-bold text-slate-700">
@@ -405,13 +405,13 @@ function ImportDialog({
                 </Label>
                 <Textarea
                   id="explanation-template"
-                  className="min-h-16 rounded-xl border-sky-100"
+                  className="min-h-16 rounded-xl border-teal-100"
                   value={explanationTemplate}
                   onChange={(e) => setExplanationTemplate(e.target.value)}
                 />
                 <p className="text-xs text-slate-500">
                   Dùng{" "}
-                  <code className="rounded-md bg-sky-50 px-1.5 py-0.5 text-sky-700">
+                  <code className="rounded-md bg-teal-50 px-1.5 py-0.5 text-teal-700">
                     {"{ANSWER}"}
                   </code>{" "}
                   để chèn đáp án đúng.
@@ -420,9 +420,9 @@ function ImportDialog({
               <button
                 type="button"
                 onClick={() => docxInputRef.current?.click()}
-                className="flex w-full flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-sky-200 bg-white px-4 py-8 text-center transition hover:border-sky-300 hover:bg-sky-50/50"
+                className="flex w-full flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-teal-200 bg-white px-4 py-8 text-center transition hover:border-teal-300 hover:bg-teal-50/50"
               >
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+                <span className="flex size-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-600">
                   <FileType2 className="size-6" />
                 </span>
                 <span className="text-sm font-bold text-slate-700">
@@ -445,25 +445,25 @@ function ImportDialog({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-sky-100 bg-sky-50/60 px-3.5 py-3">
-                <p className="mb-2 text-xs font-bold text-sky-800">
+              <div className="rounded-2xl border border-teal-100 bg-teal-50/60 px-3.5 py-3">
+                <p className="mb-2 text-xs font-bold text-teal-800">
                   3 bước lấy giải thích chi tiết
                 </p>
                 <div className="flex flex-col gap-1.5 text-xs text-slate-600 sm:flex-row sm:gap-3">
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white">
                       1
                     </span>
                     Dán đề / tải Word
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white">
                       2
                     </span>
                     Prompt → ChatGPT
                   </span>
                   <span className="inline-flex items-center gap-1.5">
-                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white">
                       3
                     </span>
                     Dán CSV về đây
@@ -478,7 +478,7 @@ function ImportDialog({
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="h-8 gap-1.5 rounded-xl border-sky-100 text-sky-700 hover:bg-sky-50"
+                    className="h-8 gap-1.5 rounded-xl border-teal-100 text-teal-700 hover:bg-teal-50"
                     onClick={() => chatgptDocxRef.current?.click()}
                   >
                     <FileType2 className="size-3.5" /> Tải Word / TXT
@@ -506,7 +506,7 @@ function ImportDialog({
                 </div>
                 <Textarea
                   id="chatgpt-source"
-                  className="min-h-24 rounded-xl border-sky-100 text-sm"
+                  className="min-h-24 rounded-xl border-teal-100 text-sm"
                   placeholder="Dán đề thi / câu hỏi (A B C D + đáp án nếu có)..."
                   value={chatgptSource}
                   onChange={(e) => setChatgptSource(e.target.value)}
@@ -516,7 +516,7 @@ function ImportDialog({
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
-                  className="gap-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600"
+                  className="gap-2 rounded-xl bg-teal-500 text-white hover:bg-teal-600"
                   onClick={generateChatGptPrompt}
                 >
                   <Sparkles className="size-4" /> Tạo &amp; sao chép prompt
@@ -527,7 +527,7 @@ function ImportDialog({
                   rel="noreferrer"
                   className={cn(
                     buttonVariants({ variant: "outline" }),
-                    "rounded-xl border-sky-100 text-sky-700 hover:bg-sky-50"
+                    "rounded-xl border-teal-100 text-teal-700 hover:bg-teal-50"
                   )}
                 >
                   Mở ChatGPT
@@ -542,7 +542,7 @@ function ImportDialog({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="h-8 gap-1.5 rounded-xl border-sky-100 text-sky-700 hover:bg-sky-50"
+                      className="h-8 gap-1.5 rounded-xl border-teal-100 text-teal-700 hover:bg-teal-50"
                       onClick={() => {
                         void navigator.clipboard.writeText(chatgptPrompt).then(
                           () => toast.success("Đã sao chép prompt"),
@@ -554,7 +554,7 @@ function ImportDialog({
                     </Button>
                   </div>
                   <Textarea
-                    className="min-h-20 rounded-xl border-sky-100 bg-slate-50/80 font-mono text-[11px] text-slate-600"
+                    className="min-h-20 rounded-xl border-teal-100 bg-slate-50/80 font-mono text-[11px] text-slate-600"
                     value={chatgptPrompt}
                     readOnly
                   />
@@ -565,14 +565,14 @@ function ImportDialog({
                 <Label htmlFor="chatgpt-reply">CSV từ ChatGPT</Label>
                 <Textarea
                   id="chatgpt-reply"
-                  className="min-h-24 rounded-xl border-sky-100 text-sm"
+                  className="min-h-24 rounded-xl border-teal-100 text-sm"
                   placeholder="Dán CSV ChatGPT trả về (kể cả khối code)..."
                   value={chatgptReply}
                   onChange={(e) => setChatgptReply(e.target.value)}
                 />
                 <Button
                   type="button"
-                  className="gap-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600"
+                  className="gap-2 rounded-xl bg-teal-500 text-white hover:bg-teal-600"
                   disabled={!chatgptReply.trim()}
                   onClick={() => parseCsvText(chatgptReply)}
                 >
@@ -583,7 +583,7 @@ function ImportDialog({
           )}
 
           {parsing ? (
-            <p className="flex items-center gap-2 text-sm text-sky-600">
+            <p className="flex items-center gap-2 text-sm text-teal-600">
               <Loader2 className="size-4 animate-spin" /> Đang đọc file...
             </p>
           ) : rows.length > 0 ? (
@@ -626,7 +626,7 @@ function ImportDialog({
                           {row.Question}
                         </TableCell>
                         <TableCell>
-                          <span className="inline-flex size-7 items-center justify-center rounded-lg bg-sky-100 text-xs font-bold text-sky-700">
+                          <span className="inline-flex size-7 items-center justify-center rounded-lg bg-teal-100 text-xs font-bold text-teal-700">
                             {row["Correct Answer"]}
                           </span>
                         </TableCell>
@@ -798,7 +798,7 @@ export function QuestionsManager() {
           action={
             <Link
               href="/admin/questions/new"
-              className={cn(buttonVariants(), "kid-btn bg-sky-500 hover:bg-sky-600")}
+              className={cn(buttonVariants(), "kid-btn bg-teal-500 hover:bg-teal-600")}
             >
               Thêm câu hỏi
             </Link>
@@ -821,7 +821,7 @@ export function QuestionsManager() {
                   <TableCell className="max-w-md whitespace-normal">
                     <Link
                       href={`/admin/questions/${question.id}`}
-                      className="font-semibold text-sky-700 hover:underline"
+                      className="font-semibold text-teal-700 hover:underline"
                     >
                       {question.content}
                     </Link>

@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { motion } from "framer-motion";
@@ -209,7 +209,7 @@ export function HomeView({
 
       <section className="space-y-3">
         <h2 className="flex items-center gap-2 font-display text-xl font-bold text-slate-800">
-          <History className="size-5 text-sky-500" /> Điểm gần đây
+          <History className="size-5 text-teal-500" /> Điểm gần đây
         </h2>
         {recent.length === 0 ? (
           <EmptyState

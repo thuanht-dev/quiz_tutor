@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -35,7 +35,7 @@ const STATUS_LABELS: Record<string, string> = {
 const STATUS_CLASS: Record<string, string> = {
   submitted: "bg-emerald-100 text-emerald-700",
   expired: "bg-amber-100 text-amber-700",
-  in_progress: "bg-sky-100 text-sky-700",
+  in_progress: "bg-teal-100 text-teal-700",
 };
 
 export function AttemptsList() {
@@ -145,7 +145,7 @@ export function AttemptsList() {
                   <TableCell>
                     <Link
                       href={`/admin/attempts/${attempt.id}`}
-                      className="font-bold text-sky-700 hover:underline"
+                      className="font-bold text-teal-700 hover:underline"
                     >
                       {attempt.student?.display_name ?? "—"}
                     </Link>

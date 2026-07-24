@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -27,7 +27,7 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
       <div className="mb-4">
         <Link
           href="/admin/attempts"
-          className="inline-flex items-center gap-1 text-sm font-bold text-sky-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm font-bold text-teal-600 hover:underline"
         >
           <ArrowLeft className="size-4" />
           Quay lại danh sách bài làm
@@ -47,7 +47,7 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
 
           <div className="mb-6 grid gap-4 sm:grid-cols-5">
             <div className="kid-card p-4 text-center">
-              <p className="text-2xl font-bold text-sky-600">
+              <p className="text-2xl font-bold text-teal-600">
                 {attempt.score}/{attempt.max_score}
               </p>
               <p className="text-sm text-slate-500">Điểm số</p>
@@ -86,7 +86,7 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
           </div>
 
           <div className="mb-6 flex flex-wrap items-center gap-3">
-            <Badge className="border-0 bg-sky-100 text-sky-700">
+            <Badge className="border-0 bg-teal-100 text-teal-700">
               {STATUS_LABELS[attempt.status] ?? attempt.status}
             </Badge>
             {attempt.is_retry_wrong ? (
@@ -146,7 +146,7 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
                             ? "border-emerald-300 bg-emerald-50 text-emerald-800"
                             : isSelected
                               ? "border-rose-300 bg-rose-50 text-rose-800"
-                              : "border-sky-100 bg-white text-slate-600"
+                              : "border-teal-100 bg-white text-slate-600"
                         )}
                       >
                         <span className="font-bold">{option.label}.</span>{" "}

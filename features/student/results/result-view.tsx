@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useMemo } from "react";
 import { motion } from "framer-motion";
@@ -92,7 +92,7 @@ function ReviewItem({ index, answer }: { index: number; answer: AttemptAnswer })
         <img
           src={question.image_url}
           alt="Hình minh họa"
-          className="max-h-56 w-full rounded-2xl bg-sky-50 object-contain"
+          className="max-h-56 w-full rounded-2xl bg-teal-50 object-contain"
         />
       ) : null}
 
@@ -131,7 +131,7 @@ function ReviewItem({ index, answer }: { index: number; answer: AttemptAnswer })
       ) : null}
 
       {question?.explanation ? (
-        <div className="rounded-2xl bg-sky-50 px-4 py-3 text-sm text-sky-800">
+        <div className="rounded-2xl bg-teal-50 px-4 py-3 text-sm text-teal-800">
           <span className="font-bold">Giải thích: </span>
           {question.explanation}
         </div>
@@ -211,12 +211,12 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
               <p className="mt-1 font-display text-lg font-bold text-rose-700">{wrong}</p>
               <p className="text-xs text-rose-600">Câu sai</p>
             </div>
-            <div className="rounded-2xl bg-sky-50 p-3">
-              <Clock className="mx-auto size-5 text-sky-500" />
-              <p className="mt-1 font-display text-lg font-bold text-sky-700">
+            <div className="rounded-2xl bg-teal-50 p-3">
+              <Clock className="mx-auto size-5 text-teal-500" />
+              <p className="mt-1 font-display text-lg font-bold text-teal-700">
                 {formatDuration(attempt.duration_seconds)}
               </p>
-              <p className="text-xs text-sky-600">Thời gian</p>
+              <p className="text-xs text-teal-600">Thời gian</p>
             </div>
           </div>
 
@@ -237,7 +237,7 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
             ) : null}
             <PendingLink
               href={`/quizzes/${attempt.quiz_id}/play`}
-              className="kid-btn inline-flex items-center justify-center gap-2 bg-sky-500 text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-sky-600 hover:shadow-lg active:translate-y-0"
+              className="kid-btn inline-flex items-center justify-center gap-2 bg-teal-500 text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-teal-600 hover:shadow-lg active:translate-y-0"
             >
               <RotateCcw className="size-4" /> Làm lại cả bài
             </PendingLink>
@@ -247,7 +247,7 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
 
       <div className="space-y-4">
         <h2 className="flex items-center gap-2 font-display text-xl font-bold text-slate-800">
-          <Sparkles className="size-5 text-sky-500" /> Xem lại bài làm
+          <Sparkles className="size-5 text-teal-500" /> Xem lại bài làm
         </h2>
         <p className="text-sm text-slate-500">
           Bài làm đã được lưu — giáo viên có thể xem tại mục Bài làm.

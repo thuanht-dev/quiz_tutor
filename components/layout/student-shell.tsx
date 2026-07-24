@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { LogOut, Home, Volume2, VolumeX } from "lucide-react";
@@ -20,14 +20,14 @@ export function StudentShell({
 
   return (
     <div className="min-h-screen">
-      <header className="sticky top-0 z-20 border-b border-sky-100 bg-white/85 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-teal-100 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <Link href="/" className="flex items-center gap-2">
-            <span className="flex size-10 items-center justify-center rounded-2xl bg-sky-500 text-lg text-white shadow-md shadow-sky-200">
-              🐻
+            <span className="flex size-10 items-center justify-center rounded-2xl bg-teal-600 font-display text-lg font-bold text-white shadow-md shadow-teal-200">
+              T
             </span>
             <div>
-              <p className="font-display text-xl font-bold text-sky-600">
+              <p className="font-display text-xl font-bold text-teal-600">
                 {APP_NAME}
               </p>
               <p className="text-xs text-slate-500">

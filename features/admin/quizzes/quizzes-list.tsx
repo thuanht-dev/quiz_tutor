@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -149,7 +149,7 @@ export function QuizzesList() {
           action={
             <Link
               href="/admin/quizzes/new"
-              className={cn(buttonVariants(), "kid-btn bg-sky-500 hover:bg-sky-600")}
+              className={cn(buttonVariants(), "kid-btn bg-teal-500 hover:bg-teal-600")}
             >
               Tạo quiz mới
             </Link>
@@ -175,7 +175,7 @@ export function QuizzesList() {
                   <TableCell>
                     <Link
                       href={`/admin/quizzes/${quiz.id}`}
-                      className="font-bold text-sky-700 hover:underline"
+                      className="font-bold text-teal-700 hover:underline"
                     >
                       {quiz.title}
                     </Link>

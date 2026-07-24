@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
@@ -218,7 +218,7 @@ export function QuizForm({
         <Button
           type="submit"
           disabled={mutation.isPending}
-          className="kid-btn gap-2 bg-sky-500 hover:bg-sky-600"
+          className="kid-btn gap-2 bg-teal-500 hover:bg-teal-600"
         >
           {mutation.isPending ? (
             <Loader2 className="animate-spin" />

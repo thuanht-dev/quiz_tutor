@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
@@ -28,8 +28,8 @@ const STAT_CARDS = [
     key: "student_count" as const,
     label: "Học sinh",
     icon: Users,
-    accent: "bg-sky-500",
-    bg: "bg-sky-50",
+    accent: "bg-teal-500",
+    bg: "bg-teal-50",
   },
   {
     key: "quiz_count" as const,
@@ -127,7 +127,7 @@ export function DashboardView() {
                     <TableCell>
                       <Link
                         href={`/admin/attempts/${attempt.id}`}
-                        className="font-bold text-sky-700 hover:underline"
+                        className="font-bold text-teal-700 hover:underline"
                       >
                         {attempt.student?.display_name ?? "—"}
                       </Link>

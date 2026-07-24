@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -44,8 +44,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             className={cn(
               "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition",
               active
-                ? "bg-sky-500 text-white shadow-md shadow-sky-200"
-                : "text-slate-600 hover:bg-sky-50 hover:text-sky-700"
+                ? "bg-teal-600 text-white shadow-md shadow-teal-200/80"
+                : "text-slate-600 hover:bg-teal-50 hover:text-teal-800"
             )}
           >
             <Icon className="size-5" />
@@ -68,16 +68,16 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="hidden border-r border-sky-100 bg-white/80 p-5 lg:block">
+      <aside className="hidden border-r border-teal-100 bg-white/80 p-5 lg:block">
         <div className="mb-8">
-          <p className="font-display text-2xl font-bold text-sky-600">
+          <p className="font-display text-2xl font-bold text-teal-700">
             {APP_NAME}
           </p>
           <p className="text-sm text-slate-500">Quản trị gia sư</p>
         </div>
         <NavLinks />
         <form action={signOutAction} className="mt-8">
-          <div className="rounded-2xl bg-sky-50 p-4">
+          <div className="rounded-2xl bg-teal-50 p-4">
             <p className="font-bold text-slate-800">{profile.display_name}</p>
             <p className="text-xs text-slate-500">@{profile.username}</p>
             <Button
@@ -93,8 +93,8 @@ export function AdminShell({
       </aside>
 
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-sky-100 bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
-          <p className="font-display text-xl font-bold text-sky-600">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-teal-100 bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
+          <p className="font-display text-xl font-bold text-teal-600">
             {APP_NAME}
           </p>
           <Sheet open={open} onOpenChange={setOpen}>
@@ -106,7 +106,7 @@ export function AdminShell({
               <Menu />
             </SheetTrigger>
             <SheetContent side="left" className="w-[280px] p-5">
-              <p className="mb-6 font-display text-xl font-bold text-sky-600">
+              <p className="mb-6 font-display text-xl font-bold text-teal-600">
                 Menu
               </p>
               <NavLinks onNavigate={() => setOpen(false)} />

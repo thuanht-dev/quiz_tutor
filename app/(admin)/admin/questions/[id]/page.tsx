@@ -21,7 +21,7 @@ export default async function EditQuestionPage({
       <div className="mb-4">
         <Link
           href="/admin/questions"
-          className="inline-flex items-center gap-1 text-sm font-bold text-sky-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm font-bold text-teal-700 hover:underline"
         >
           <ArrowLeft className="size-4" />
           Quay lại ngân hàng câu hỏi

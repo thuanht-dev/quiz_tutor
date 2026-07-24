@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -160,7 +160,7 @@ function SubjectDialog({
             <Button
               type="submit"
               disabled={mutation.isPending}
-              className="kid-btn bg-sky-500 hover:bg-sky-600"
+              className="kid-btn bg-teal-500 hover:bg-teal-600"
             >
               {mutation.isPending ? (
                 <Loader2 className="animate-spin" />
@@ -249,7 +249,7 @@ export function SubjectsManager() {
           title="Chưa có môn học nào"
           description="Bấm nút bên trên để thêm môn học đầu tiên"
           action={
-            <Button onClick={openCreate} className="kid-btn bg-sky-500 hover:bg-sky-600">
+            <Button onClick={openCreate} className="kid-btn bg-teal-500 hover:bg-teal-600">
               Thêm môn học
             </Button>
           }

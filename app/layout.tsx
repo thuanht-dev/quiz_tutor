@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+﻿import type { Metadata } from "next";
 import { Fredoka, Nunito } from "next/font/google";
 import { AuthSessionRefresh } from "@/components/auth-session-refresh";
 import { Providers } from "@/components/providers";
@@ -36,7 +36,7 @@ export default function RootLayout({
       <body className="min-h-full font-sans">
         <a
           href="#main-content"
-          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-sky-600 focus:px-4 focus:py-2 focus:text-white"
+          className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded-xl focus:bg-teal-600 focus:px-4 focus:py-2 focus:text-white"
         >
           Bỏ qua đến nội dung chính
         </a>

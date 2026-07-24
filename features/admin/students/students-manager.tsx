@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import { useForm, Controller } from "react-hook-form";
@@ -152,7 +152,7 @@ function StudentDialog({
             control={form.control}
             name="is_active"
             render={({ field }) => (
-              <div className="flex items-center justify-between rounded-xl bg-sky-50 px-4 py-3">
+              <div className="flex items-center justify-between rounded-xl bg-teal-50 px-4 py-3">
                 <Label htmlFor="student-active">Đang hoạt động</Label>
                 <Switch
                   id="student-active"
@@ -175,7 +175,7 @@ function StudentDialog({
             <Button
               type="submit"
               disabled={mutation.isPending}
-              className="kid-btn bg-sky-500 hover:bg-sky-600"
+              className="kid-btn bg-teal-500 hover:bg-teal-600"
             >
               {mutation.isPending ? (
                 <Loader2 className="animate-spin" />
@@ -346,7 +346,7 @@ export function StudentsManager() {
           title="Chưa có học sinh nào"
           description="Thêm tài khoản học sinh đầu tiên"
           action={
-            <Button onClick={openCreate} className="kid-btn bg-sky-500 hover:bg-sky-600">
+            <Button onClick={openCreate} className="kid-btn bg-teal-500 hover:bg-teal-600">
               Thêm học sinh
             </Button>
           }

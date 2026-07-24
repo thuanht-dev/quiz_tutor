@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -92,7 +92,7 @@ export function QuizDetail({ quizId }: { quizId: string }) {
       <div className="mb-4">
         <Link
           href="/admin/quizzes"
-          className="inline-flex items-center gap-1 text-sm font-bold text-sky-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm font-bold text-teal-600 hover:underline"
         >
           <ArrowLeft className="size-4" />
           Quay lại danh sách quiz
@@ -156,7 +156,7 @@ export function QuizDetail({ quizId }: { quizId: string }) {
                     "flex cursor-pointer items-start gap-3 rounded-2xl border p-3 transition",
                     selectedIds.has(question.id)
                       ? "border-emerald-300 bg-emerald-50"
-                      : "border-sky-100 bg-white hover:bg-sky-50"
+                      : "border-teal-100 bg-white hover:bg-teal-50"
                   )}
                 >
                   <Checkbox

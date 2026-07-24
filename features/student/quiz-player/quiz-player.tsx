@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
@@ -23,10 +23,10 @@ import { useQuizSession } from "@/stores/quiz-session";
 import type { OptionLabel, Question, Quiz } from "@/types/database";
 
 const OPTION_STYLES: Record<OptionLabel, { bg: string; text: string }> = {
-  A: { bg: "bg-sky-500", text: "text-white" },
-  B: { bg: "bg-emerald-500", text: "text-white" },
-  C: { bg: "bg-amber-500", text: "text-white" },
-  D: { bg: "bg-pink-500", text: "text-white" },
+  A: { bg: "bg-teal-600", text: "text-white" },
+  B: { bg: "bg-emerald-600", text: "text-white" },
+  C: { bg: "bg-amber-600", text: "text-white" },
+  D: { bg: "bg-slate-600", text: "text-white" },
 };
 
 function playSelectBeep(ctxRef: RefObject<AudioContext | null>) {
@@ -192,7 +192,7 @@ export function QuizPlayer({
             <div
               className={cn(
                 "flex shrink-0 items-center gap-1.5 rounded-2xl px-3 py-1.5 font-display text-lg font-bold tabular-nums",
-                lowTime ? "animate-pulse bg-rose-100 text-rose-600" : "bg-sky-100 text-sky-600"
+                lowTime ? "animate-pulse bg-rose-100 text-rose-600" : "bg-teal-100 text-teal-600"
               )}
             >
               <Clock className="size-5" />
@@ -201,9 +201,9 @@ export function QuizPlayer({
           ) : null}
         </div>
 
-        <div className="h-3 w-full overflow-hidden rounded-full bg-sky-100">
+        <div className="h-3 w-full overflow-hidden rounded-full bg-teal-100">
           <motion.div
-            className="h-full rounded-full bg-gradient-to-r from-sky-400 via-cyan-400 to-emerald-400"
+            className="h-full rounded-full bg-gradient-to-r from-teal-500 via-teal-400 to-emerald-500"
             initial={false}
             animate={{ width: `${progressPercent}%` }}
             transition={{ type: "spring", stiffness: 120, damping: 20 }}
@@ -220,7 +220,7 @@ export function QuizPlayer({
               className={cn(
                 "flex size-7 items-center justify-center rounded-full text-xs font-bold transition-colors",
                 i === currentIndex
-                  ? "bg-sky-500 text-white"
+                  ? "bg-teal-500 text-white"
                   : answers[q.id]
                     ? "bg-emerald-100 text-emerald-700"
                     : "bg-slate-100 text-slate-400"
@@ -250,7 +250,7 @@ export function QuizPlayer({
             <img
               src={question.image_url}
               alt="Hình minh họa"
-              className="max-h-64 w-full rounded-2xl bg-sky-50 object-contain"
+              className="max-h-64 w-full rounded-2xl bg-teal-50 object-contain"
             />
           ) : null}
 
@@ -268,7 +268,7 @@ export function QuizPlayer({
                     "flex items-center gap-3 rounded-2xl border-2 p-4 text-left text-base font-semibold transition-all",
                     selected
                       ? cn("border-transparent shadow-lg", style.bg, style.text)
-                      : "border-slate-200 bg-white text-slate-700 hover:border-sky-300 hover:bg-sky-50"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:bg-teal-50"
                   )}
                 >
                   <span
@@ -351,7 +351,7 @@ export function QuizPlayer({
           <Button
             type="button"
             size="lg"
-            className="kid-btn gap-1 bg-sky-500 text-white hover:bg-sky-600"
+            className="kid-btn gap-1 bg-teal-500 text-white hover:bg-teal-600"
             onClick={goNext}
           >
             Câu tiếp <ChevronRight className="size-5" />

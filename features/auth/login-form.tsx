@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useForm } from "react-hook-form";
@@ -49,29 +49,26 @@ export function LoginForm() {
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}
-        className="grid w-full max-w-4xl overflow-hidden rounded-[2rem] border border-sky-100 bg-white shadow-xl shadow-sky-100 lg:grid-cols-2"
+        className="grid w-full max-w-4xl overflow-hidden rounded-[2rem] border border-teal-100 bg-white shadow-xl shadow-teal-100/80 lg:grid-cols-2"
       >
-        <div className="relative hidden overflow-hidden bg-gradient-to-br from-sky-400 via-cyan-400 to-emerald-300 p-10 text-white lg:block">
-          <div className="absolute inset-0 opacity-30">
-            <div className="absolute -left-10 top-10 size-40 rounded-full bg-white/40 blur-2xl" />
-            <div className="absolute bottom-0 right-0 size-56 rounded-full bg-amber-200/50 blur-2xl" />
+        <div className="relative hidden overflow-hidden bg-gradient-to-br from-teal-700 via-teal-600 to-emerald-600 p-10 text-white lg:block">
+          <div className="absolute inset-0 opacity-25">
+            <div className="absolute -left-10 top-10 size-40 rounded-full bg-white/30 blur-2xl" />
+            <div className="absolute bottom-0 right-0 size-56 rounded-full bg-emerald-300/40 blur-2xl" />
           </div>
           <div className="relative z-10 flex h-full flex-col justify-between">
             <div>
               <p className="font-display text-4xl font-bold">{APP_NAME}</p>
               <p className="mt-3 max-w-xs text-lg text-white/90">
-                Học vui mỗi ngày với bài trắc nghiệm đầy màu sắc!
+                Quiz rõ ràng, chấm điểm nhanh — dành cho gia sư và học sinh.
               </p>
             </div>
-            {/* <p className="text-sm text-white/80">
-              Dành cho gia sư & học sinh tiểu học
-            </p> */}
           </div>
         </div>
 
         <div className="p-8 sm:p-10">
           <div className="mb-8 lg:hidden">
-            <p className="font-display text-3xl font-bold text-sky-600">
+            <p className="font-display text-3xl font-bold text-teal-600">
               {APP_NAME}
             </p>
           </div>
@@ -115,7 +112,7 @@ export function LoginForm() {
             <Button
               type="submit"
               disabled={loading}
-              className="kid-btn w-full bg-sky-500 hover:bg-sky-600"
+              className="kid-btn w-full bg-teal-500 hover:bg-teal-600"
             >
               {loading ? (
                 <>

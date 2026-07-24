@@ -51,41 +51,42 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Education palette: teal brand + soft mint surface (calm, tutor-friendly) */
 :root {
-  --background: #f0f9ff;
-  --foreground: #0f172a;
+  --background: #f2f8f7;
+  --foreground: #134e4a;
   --card: #ffffff;
-  --card-foreground: #0f172a;
+  --card-foreground: #134e4a;
   --popover: #ffffff;
-  --popover-foreground: #0f172a;
-  --primary: #0284c7;
-  --primary-foreground: #f0f9ff;
-  --secondary: #fef3c7;
-  --secondary-foreground: #92400e;
-  --muted: #e0f2fe;
-  --muted-foreground: #475569;
-  --accent: #bbf7d0;
-  --accent-foreground: #14532d;
+  --popover-foreground: #134e4a;
+  --primary: #0f766e;
+  --primary-foreground: #f0fdfa;
+  --secondary: #ccfbf1;
+  --secondary-foreground: #115e59;
+  --muted: #e6f4f1;
+  --muted-foreground: #5b6f6c;
+  --accent: #d1fae5;
+  --accent-foreground: #065f46;
   --destructive: #e11d48;
-  --success: #16a34a;
-  --warning: #ea580c;
-  --border: #bae6fd;
-  --input: #bae6fd;
-  --ring: #0ea5e9;
-  --chart-1: #0ea5e9;
-  --chart-2: #22c55e;
-  --chart-3: #f97316;
-  --chart-4: #eab308;
-  --chart-5: #ec4899;
+  --success: #059669;
+  --warning: #d97706;
+  --border: #c5e0db;
+  --input: #c5e0db;
+  --ring: #14b8a6;
+  --chart-1: #0d9488;
+  --chart-2: #059669;
+  --chart-3: #d97706;
+  --chart-4: #0ea5e9;
+  --chart-5: #64748b;
   --radius: 1rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #0f172a;
-  --sidebar-primary: #0284c7;
-  --sidebar-primary-foreground: #f0f9ff;
-  --sidebar-accent: #e0f2fe;
-  --sidebar-accent-foreground: #0c4a6e;
-  --sidebar-border: #bae6fd;
-  --sidebar-ring: #0ea5e9;
+  --sidebar-foreground: #134e4a;
+  --sidebar-primary: #0f766e;
+  --sidebar-primary-foreground: #f0fdfa;
+  --sidebar-accent: #e6f4f1;
+  --sidebar-accent-foreground: #115e59;
+  --sidebar-border: #c5e0db;
+  --sidebar-ring: #14b8a6;
 }
 
 @layer base {
@@ -95,9 +96,9 @@
   body {
     @apply bg-background text-foreground antialiased;
     background-image:
-      radial-gradient(circle at 10% 10%, rgba(56, 189, 248, 0.18), transparent 35%),
-      radial-gradient(circle at 90% 0%, rgba(74, 222, 128, 0.16), transparent 30%),
-      radial-gradient(circle at 80% 80%, rgba(251, 191, 36, 0.14), transparent 35%);
+      radial-gradient(circle at 12% 8%, rgba(45, 212, 191, 0.16), transparent 38%),
+      radial-gradient(circle at 88% 4%, rgba(52, 211, 153, 0.1), transparent 32%),
+      radial-gradient(circle at 70% 92%, rgba(20, 184, 166, 0.08), transparent 40%);
     background-attachment: fixed;
   }
   html {
@@ -110,7 +111,7 @@
     font-family: var(--font-fredoka), var(--font-nunito), sans-serif;
   }
   .kid-card {
-    @apply rounded-3xl border border-sky-100 bg-white/90 shadow-[0_10px_30px_-18px_rgba(14,165,233,0.55)] backdrop-blur;
+    @apply rounded-3xl border border-teal-100 bg-white/90 shadow-[0_12px_28px_-18px_rgba(15,118,110,0.45)] backdrop-blur;
   }
   .kid-btn {
     @apply h-12 rounded-2xl px-5 text-base font-bold;

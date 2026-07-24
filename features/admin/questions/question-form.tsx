@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useRouter } from "next/navigation";
 import { useForm, Controller } from "react-hook-form";
@@ -188,7 +188,7 @@ export function QuestionForm({
                     "flex items-center gap-3 rounded-2xl border p-3 transition",
                     field.value === label
                       ? "border-emerald-300 bg-emerald-50"
-                      : "border-sky-100 bg-white"
+                      : "border-teal-100 bg-white"
                   )}
                 >
                   <button
@@ -198,7 +198,7 @@ export function QuestionForm({
                       "flex size-9 shrink-0 items-center justify-center rounded-full text-sm font-bold transition",
                       field.value === label
                         ? "bg-emerald-500 text-white"
-                        : "bg-sky-100 text-sky-700"
+                        : "bg-teal-100 text-teal-700"
                     )}
                     aria-label={`Chọn đáp án đúng là ${label}`}
                   >
@@ -230,7 +230,7 @@ export function QuestionForm({
         <Button
           type="submit"
           disabled={mutation.isPending}
-          className="kid-btn gap-2 bg-sky-500 hover:bg-sky-600"
+          className="kid-btn gap-2 bg-teal-500 hover:bg-teal-600"
         >
           {mutation.isPending ? (
             <Loader2 className="animate-spin" />

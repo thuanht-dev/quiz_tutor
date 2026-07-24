@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { PageHeader } from "@/components/shared/states";
 import { QuizForm } from "@/features/admin/quizzes/quiz-form";
@@ -11,7 +11,7 @@ export default function NewQuizPage() {
       <div className="mb-4">
         <Link
           href="/admin/quizzes"
-          className="inline-flex items-center gap-1 text-sm font-bold text-sky-600 hover:underline"
+          className="inline-flex items-center gap-1 text-sm font-bold text-teal-600 hover:underline"
         >
           <ArrowLeft className="size-4" />
           Quay lại danh sách quiz
