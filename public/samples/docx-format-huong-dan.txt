@@ -1,0 +1,30 @@
+HƯỚNG DẪN ĐỊNH DẠNG FILE WORD (.docx) ĐỂ CHUYỂN SANG CSV
+
+Mỗi câu hỏi nên theo dạng:
+
+Câu 1: 15 + 7 = ?
+A. 21
+B. 22
+C. 23
+D. 24
+Đáp án: B
+
+Câu 2: Từ nào đồng nghĩa với "vui vẻ"?
+A. Buồn bã
+B. Hạnh phúc
+C. Giận dữ
+D. Mệt mỏi
+Đáp án: B
+
+Cũng chấp nhận:
+2) Câu hỏi ...
+A) ...
+B) ...
+Answer: A
+
+Ghi chú:
+- Đáp án A–D: dùng A. / A) / a. / a)
+- Dòng đáp án: "Đáp án: B", "Đáp án đúng: B", "Answer: B", "Correct: B"
+- File Word không cần phần giải thích — hệ thống tự tạo cột Explanation
+  (mặc định: "Đáp án đúng là B." — chỉnh được trong hộp nhập)
+- Sau khi chuyển: xem preview → Tải CSV đã chuyển và/hoặc Import luôn

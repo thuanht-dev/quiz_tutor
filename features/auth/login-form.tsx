@@ -63,9 +63,9 @@ export function LoginForm() {
                 Học vui mỗi ngày với bài trắc nghiệm đầy màu sắc!
               </p>
             </div>
-            <p className="text-sm text-white/80">
+            {/* <p className="text-sm text-white/80">
               Dành cho gia sư & học sinh tiểu học
-            </p>
+            </p> */}
           </div>
         </div>
 
