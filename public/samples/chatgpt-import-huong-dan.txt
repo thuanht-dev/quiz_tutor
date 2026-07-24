@@ -1,0 +1,13 @@
+HƯỚNG DẪN: DÙNG CHATGPT ĐỂ TẠO CSV + GIẢI THÍCH CHI TIẾT
+
+Trong Admin → Câu hỏi → Nhập từ file → tab "ChatGPT":
+
+1. Dán đề hoặc tải file Word/TXT
+2. Bấm "Tạo & sao chép prompt"
+3. Mở ChatGPT → dán prompt → gửi
+4. Copy toàn bộ CSV ChatGPT trả về → dán lại vào ô "Dán CSV từ ChatGPT"
+5. Bấm "Phân tích CSV" → chọn môn → Nhập câu hỏi
+
+Prompt đã yêu cầu ChatGPT:
+- Đúng cột: Question, A, B, C, D, Correct Answer, Explanation, Image URL
+- Explanation tiếng Việt, chi tiết từng câu (vì sao đúng / vì sao sai)

@@ -16,6 +16,7 @@ import {
   Pencil,
   Plus,
   Search,
+  Sparkles,
   Trash2,
   UploadCloud,
 } from "lucide-react";
@@ -57,6 +58,10 @@ import {
   listSubjects,
 } from "@/lib/repositories";
 import {
+  buildChatGptImportPrompt,
+  extractCsvFromChatReply,
+} from "@/lib/import/chatgpt-prompt";
+import {
   parseQuizTextToRows,
   validateImportRows,
 } from "@/lib/import/parse-quiz-text";
@@ -69,7 +74,7 @@ import {
 import { cn } from "@/lib/utils";
 import type { ImportQuestionRow } from "@/types/database";
 
-type ImportMode = "file" | "docx";
+type ImportMode = "file" | "docx" | "chatgpt";
 
 function downloadCsvTemplate() {
   downloadTextFile(
@@ -96,6 +101,7 @@ function ImportDialog({
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const docxInputRef = useRef<HTMLInputElement>(null);
+  const chatgptDocxRef = useRef<HTMLInputElement>(null);
   const [mode, setMode] = useState<ImportMode>("file");
   const [subjectId, setSubjectId] = useState("");
   const [fileName, setFileName] = useState("");
@@ -104,6 +110,9 @@ function ImportDialog({
   const [explanationTemplate, setExplanationTemplate] = useState(
     "Đáp án đúng là {ANSWER}."
   );
+  const [chatgptSource, setChatgptSource] = useState("");
+  const [chatgptPrompt, setChatgptPrompt] = useState("");
+  const [chatgptReply, setChatgptReply] = useState("");
 
   const { data: subjects } = useQuery({
     queryKey: ["subjects"],
@@ -127,9 +136,62 @@ function ImportDialog({
     setRows([]);
     setSubjectId("");
     setMode("file");
+    setChatgptSource("");
+    setChatgptPrompt("");
+    setChatgptReply("");
     if (fileInputRef.current) fileInputRef.current.value = "";
     if (docxInputRef.current) docxInputRef.current.value = "";
+    if (chatgptDocxRef.current) chatgptDocxRef.current.value = "";
     onOpenChange(false);
+  }
+
+  function parseCsvText(csvText: string) {
+    const cleaned = extractCsvFromChatReply(csvText);
+    const results = Papa.parse<ImportQuestionRow>(cleaned, {
+      header: true,
+      skipEmptyLines: true,
+    });
+    if (results.errors.length) {
+      toast.error(results.errors[0]?.message || "CSV không hợp lệ");
+      return;
+    }
+    applyRows(results.data.filter((r) => r.Question));
+  }
+
+  function generateChatGptPrompt() {
+    if (!chatgptSource.trim()) {
+      toast.error("Hãy dán đề hoặc tải file Word trước");
+      return;
+    }
+    const subjectName = subjects?.find((s) => s.id === subjectId)?.name;
+    const prompt = buildChatGptImportPrompt(chatgptSource, {
+      subjectHint: subjectName,
+    });
+    setChatgptPrompt(prompt);
+    void navigator.clipboard.writeText(prompt).then(
+      () => toast.success("Đã tạo và sao chép prompt vào clipboard"),
+      () => toast.success("Đã tạo prompt — bấm Sao chép nếu cần")
+    );
+  }
+
+  async function loadChatgptDocx(file: File) {
+    setParsing(true);
+    setFileName(file.name);
+    try {
+      const buffer = await file.arrayBuffer();
+      const result = await mammoth.extractRawText({ arrayBuffer: buffer });
+      const text = result.value.trim();
+      if (!text) {
+        toast.error("File Word không có nội dung chữ");
+        return;
+      }
+      setChatgptSource(text);
+      toast.success("Đã đọc đề từ Word — bấm Tạo prompt");
+    } catch {
+      toast.error("Không thể đọc file Word (.docx)");
+    } finally {
+      setParsing(false);
+    }
   }
 
   function applyRows(next: ImportQuestionRow[]) {
@@ -219,7 +281,7 @@ function ImportDialog({
         else onOpenChange(next);
       }}
     >
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>Nhập câu hỏi từ file</DialogTitle>
         </DialogHeader>
@@ -258,14 +320,24 @@ function ImportDialog({
               >
                 <FileType2 className="size-4" /> Hướng dẫn Word
               </a>
+              <a
+                href="/samples/chatgpt-import-huong-dan.txt"
+                download
+                className={cn(
+                  buttonVariants({ variant: "outline" }),
+                  "gap-2 rounded-xl"
+                )}
+              >
+                <Sparkles className="size-4" /> Hướng dẫn ChatGPT
+              </a>
             </div>
           </div>
 
-          <div className="flex gap-2 rounded-2xl bg-slate-100 p-1">
+          <div className="flex flex-wrap gap-1 rounded-2xl bg-slate-100 p-1">
             <button
               type="button"
               className={cn(
-                "flex-1 rounded-xl px-3 py-2 text-sm font-bold transition",
+                "min-w-[30%] flex-1 rounded-xl px-2 py-2 text-sm font-bold transition",
                 mode === "file"
                   ? "bg-white text-sky-700 shadow-sm"
                   : "text-slate-500"
@@ -277,14 +349,26 @@ function ImportDialog({
             <button
               type="button"
               className={cn(
-                "flex-1 rounded-xl px-3 py-2 text-sm font-bold transition",
+                "min-w-[30%] flex-1 rounded-xl px-2 py-2 text-sm font-bold transition",
                 mode === "docx"
                   ? "bg-white text-sky-700 shadow-sm"
                   : "text-slate-500"
               )}
               onClick={() => setMode("docx")}
             >
-              Word → CSV
+              Word nhanh
+            </button>
+            <button
+              type="button"
+              className={cn(
+                "min-w-[30%] flex-1 rounded-xl px-2 py-2 text-sm font-bold transition",
+                mode === "chatgpt"
+                  ? "bg-white text-violet-700 shadow-sm"
+                  : "text-slate-500"
+              )}
+              onClick={() => setMode("chatgpt")}
+            >
+              ChatGPT
             </button>
           </div>
 
@@ -328,7 +412,7 @@ function ImportDialog({
                 }}
               />
             </>
-          ) : (
+          ) : mode === "docx" ? (
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="explanation-template">
@@ -369,6 +453,129 @@ function ImportDialog({
                 }}
               />
             </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="rounded-2xl border border-violet-100 bg-violet-50/70 p-3 text-xs leading-relaxed text-slate-600">
+                <p className="mb-1 flex items-center gap-1.5 font-bold text-violet-800">
+                  <Sparkles className="size-3.5" /> Dùng ChatGPT viết giải thích chi tiết
+                </p>
+                <ol className="list-decimal space-y-0.5 pl-4">
+                  <li>Dán đề hoặc tải Word</li>
+                  <li>Tạo prompt → dán vào ChatGPT</li>
+                  <li>Dán CSV ChatGPT trả về → nhập vào hệ thống</li>
+                </ol>
+              </div>
+
+              <div className="space-y-2">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <Label htmlFor="chatgpt-source">Nội dung đề / câu hỏi</Label>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    className="gap-1.5 rounded-xl"
+                    onClick={() => chatgptDocxRef.current?.click()}
+                  >
+                    <FileType2 className="size-3.5" /> Tải Word
+                  </Button>
+                  <input
+                    ref={chatgptDocxRef}
+                    type="file"
+                    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.txt,text/plain"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      const ext = file.name.split(".").pop()?.toLowerCase();
+                      if (ext === "txt") {
+                        void file.text().then((t) => {
+                          setChatgptSource(t);
+                          setFileName(file.name);
+                          toast.success("Đã đọc file TXT");
+                        });
+                        return;
+                      }
+                      void loadChatgptDocx(file);
+                    }}
+                  />
+                </div>
+                <Textarea
+                  id="chatgpt-source"
+                  className="min-h-28 rounded-xl font-mono text-xs"
+                  placeholder="Dán đề thi / danh sách câu hỏi (có A B C D và đáp án nếu có)..."
+                  value={chatgptSource}
+                  onChange={(e) => setChatgptSource(e.target.value)}
+                />
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <Button
+                  type="button"
+                  className="gap-2 rounded-xl bg-violet-600 hover:bg-violet-700"
+                  onClick={generateChatGptPrompt}
+                >
+                  <Sparkles className="size-4" /> Tạo &amp; sao chép prompt
+                </Button>
+                <a
+                  href="https://chatgpt.com/"
+                  target="_blank"
+                  rel="noreferrer"
+                  className={cn(
+                    buttonVariants({ variant: "outline" }),
+                    "rounded-xl"
+                  )}
+                >
+                  Mở ChatGPT
+                </a>
+              </div>
+
+              {chatgptPrompt ? (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <Label>Prompt đã tạo</Label>
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="sm"
+                      className="gap-1.5 rounded-xl"
+                      onClick={() => {
+                        void navigator.clipboard.writeText(chatgptPrompt).then(
+                          () => toast.success("Đã sao chép prompt"),
+                          () => toast.error("Không sao chép được")
+                        );
+                      }}
+                    >
+                      <Copy className="size-3.5" /> Sao chép lại
+                    </Button>
+                  </div>
+                  <Textarea
+                    className="min-h-24 rounded-xl font-mono text-[11px] text-slate-600"
+                    value={chatgptPrompt}
+                    readOnly
+                  />
+                </div>
+              ) : null}
+
+              <div className="space-y-2">
+                <Label htmlFor="chatgpt-reply">Dán CSV từ ChatGPT</Label>
+                <Textarea
+                  id="chatgpt-reply"
+                  className="min-h-28 rounded-xl font-mono text-xs"
+                  placeholder={'Dán nguyên phản hồi CSV (kể cả khối ```csv ... ```)...'}
+                  value={chatgptReply}
+                  onChange={(e) => setChatgptReply(e.target.value)}
+                />
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="gap-2 rounded-xl"
+                  disabled={!chatgptReply.trim()}
+                  onClick={() => parseCsvText(chatgptReply)}
+                >
+                  <FileUp className="size-4" /> Phân tích CSV
+                </Button>
+              </div>
+            </div>
           )}
 
           {parsing ? (
@@ -387,7 +594,9 @@ function ImportDialog({
                   className="gap-2 rounded-xl"
                   onClick={() =>
                     downloadTextFile(
-                      "questions-from-docx.csv",
+                      mode === "chatgpt"
+                        ? "questions-from-chatgpt.csv"
+                        : "questions-from-docx.csv",
                       rowsToCsv(rows),
                       "text/csv;charset=utf-8"
                     )
