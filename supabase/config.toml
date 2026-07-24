@@ -1,0 +1,6 @@
+{
+  "project_id": "tutor-quiz",
+  "seed": {
+    "sql_paths": ["./seed.sql"]
+  }
+}

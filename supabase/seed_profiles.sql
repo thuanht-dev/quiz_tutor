@@ -1,0 +1,15 @@
+-- Optional: after creating auth users via Dashboard / Admin API,
+-- upsert matching profiles. Replace UUIDs with real auth.users ids.
+
+-- Example (run after Auth users exist):
+-- insert into public.profiles (id, username, display_name, role, is_active)
+-- values
+--   ('<admin-uuid>', 'admin', 'Cô Mai', 'admin', true),
+--   ('<minh-uuid>', 'minh', 'Nguyễn Minh', 'student', true),
+--   ('<lan-uuid>', 'lan', 'Trần Lan', 'student', true),
+--   ('<tuan-uuid>', 'tuan', 'Lê Tuấn', 'student', true)
+-- on conflict (id) do update
+-- set username = excluded.username,
+--     display_name = excluded.display_name,
+--     role = excluded.role,
+--     is_active = excluded.is_active;
