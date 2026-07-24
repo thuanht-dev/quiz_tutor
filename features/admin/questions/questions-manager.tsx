@@ -281,101 +281,27 @@ function ImportDialog({
         else onOpenChange(next);
       }}
     >
-      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
+      <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>Nhập câu hỏi từ file</DialogTitle>
+          <DialogTitle className="font-display text-xl text-sky-700">
+            Nhập câu hỏi từ file
+          </DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-5">
-          <div className="rounded-2xl border border-sky-100 bg-sky-50/70 p-4">
-            <p className="text-sm font-bold text-slate-800">Tải file mẫu</p>
-            <p className="mt-1 text-xs text-slate-500">
-              Cột chuẩn: Question, A, B, C, D, Correct Answer, Explanation, Image
-              URL
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-2 rounded-xl"
-                onClick={downloadCsvTemplate}
-              >
-                <Download className="size-4" /> CSV mẫu
-              </Button>
-              <Button
-                type="button"
-                variant="outline"
-                className="gap-2 rounded-xl"
-                onClick={downloadXlsxTemplate}
-              >
-                <Download className="size-4" /> Excel mẫu
-              </Button>
-              <a
-                href="/samples/docx-format-huong-dan.txt"
-                download
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "gap-2 rounded-xl"
-                )}
-              >
-                <FileType2 className="size-4" /> Hướng dẫn Word
-              </a>
-              <a
-                href="/samples/chatgpt-import-huong-dan.txt"
-                download
-                className={cn(
-                  buttonVariants({ variant: "outline" }),
-                  "gap-2 rounded-xl"
-                )}
-              >
-                <Sparkles className="size-4" /> Hướng dẫn ChatGPT
-              </a>
-            </div>
-          </div>
-
-          <div className="flex flex-wrap gap-1 rounded-2xl bg-slate-100 p-1">
-            <button
-              type="button"
-              className={cn(
-                "min-w-[30%] flex-1 rounded-xl px-2 py-2 text-sm font-bold transition",
-                mode === "file"
-                  ? "bg-white text-sky-700 shadow-sm"
-                  : "text-slate-500"
-              )}
-              onClick={() => setMode("file")}
-            >
-              CSV / Excel
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "min-w-[30%] flex-1 rounded-xl px-2 py-2 text-sm font-bold transition",
-                mode === "docx"
-                  ? "bg-white text-sky-700 shadow-sm"
-                  : "text-slate-500"
-              )}
-              onClick={() => setMode("docx")}
-            >
-              Word nhanh
-            </button>
-            <button
-              type="button"
-              className={cn(
-                "min-w-[30%] flex-1 rounded-xl px-2 py-2 text-sm font-bold transition",
-                mode === "chatgpt"
-                  ? "bg-white text-violet-700 shadow-sm"
-                  : "text-slate-500"
-              )}
-              onClick={() => setMode("chatgpt")}
-            >
-              ChatGPT
-            </button>
-          </div>
-
+        <div className="space-y-4">
           <div className="space-y-2">
             <Label>Môn học áp dụng</Label>
-            <Select value={subjectId} onValueChange={(v) => setSubjectId(v ?? "")}>
-              <SelectTrigger className="h-11 w-full rounded-xl">
+            <Select
+              value={subjectId}
+              onValueChange={(v) => setSubjectId(v ?? "")}
+              items={
+                subjects?.map((subject) => ({
+                  value: subject.id,
+                  label: subject.name,
+                })) ?? []
+              }
+            >
+              <SelectTrigger className="h-11 w-full rounded-xl border-sky-100">
                 <SelectValue placeholder="Chọn môn học" />
               </SelectTrigger>
               <SelectContent>
@@ -388,18 +314,77 @@ function ImportDialog({
             </Select>
           </div>
 
+          <div className="grid grid-cols-3 gap-1 rounded-2xl border border-sky-100 bg-sky-50/80 p-1">
+            {(
+              [
+                { id: "file" as const, label: "CSV / Excel" },
+                { id: "docx" as const, label: "Word nhanh" },
+                { id: "chatgpt" as const, label: "ChatGPT" },
+              ] as const
+            ).map((tab) => (
+              <button
+                key={tab.id}
+                type="button"
+                className={cn(
+                  "rounded-xl px-2 py-2.5 text-sm font-bold transition",
+                  mode === tab.id
+                    ? "bg-white text-sky-700 shadow-sm ring-1 ring-sky-100"
+                    : "text-slate-500 hover:text-sky-600"
+                )}
+                onClick={() => setMode(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          <div className="flex flex-wrap gap-2 text-xs">
+            <button
+              type="button"
+              onClick={downloadCsvTemplate}
+              className="inline-flex items-center gap-1.5 rounded-full border border-sky-100 bg-white px-3 py-1.5 font-semibold text-sky-700 transition hover:bg-sky-50"
+            >
+              <Download className="size-3.5" /> CSV mẫu
+            </button>
+            <button
+              type="button"
+              onClick={downloadXlsxTemplate}
+              className="inline-flex items-center gap-1.5 rounded-full border border-sky-100 bg-white px-3 py-1.5 font-semibold text-sky-700 transition hover:bg-sky-50"
+            >
+              <Download className="size-3.5" /> Excel mẫu
+            </button>
+            <a
+              href="/samples/docx-format-huong-dan.txt"
+              download
+              className="inline-flex items-center gap-1.5 rounded-full border border-sky-100 bg-white px-3 py-1.5 font-semibold text-sky-700 transition hover:bg-sky-50"
+            >
+              <FileType2 className="size-3.5" /> HD Word
+            </a>
+            <a
+              href="/samples/chatgpt-import-huong-dan.txt"
+              download
+              className="inline-flex items-center gap-1.5 rounded-full border border-sky-100 bg-white px-3 py-1.5 font-semibold text-sky-700 transition hover:bg-sky-50"
+            >
+              <Sparkles className="size-3.5" /> HD ChatGPT
+            </a>
+          </div>
+
           {mode === "file" ? (
             <>
               <button
                 type="button"
                 onClick={() => fileInputRef.current?.click()}
-                className="flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-sky-200 bg-sky-50/60 px-4 py-8 text-center transition hover:bg-sky-50"
+                className="flex w-full flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-sky-200 bg-white px-4 py-8 text-center transition hover:border-sky-300 hover:bg-sky-50/50"
               >
-                <UploadCloud className="size-8 text-sky-500" />
+                <span className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+                  <UploadCloud className="size-6" />
+                </span>
                 <span className="text-sm font-bold text-slate-700">
                   {fileName || "Chọn file CSV hoặc XLSX"}
                 </span>
-                <span className="text-xs text-slate-500">Bấm để chọn file</span>
+                <span className="text-xs text-slate-500">
+                  Cột: Question, A–D, Correct Answer, Explanation
+                </span>
               </button>
               <input
                 ref={fileInputRef}
@@ -416,30 +401,35 @@ function ImportDialog({
             <div className="space-y-3">
               <div className="space-y-2">
                 <Label htmlFor="explanation-template">
-                  Explanation mặc định (khi Word không có giải thích)
+                  Explanation mặc định
                 </Label>
                 <Textarea
                   id="explanation-template"
-                  className="min-h-20 rounded-xl"
+                  className="min-h-16 rounded-xl border-sky-100"
                   value={explanationTemplate}
                   onChange={(e) => setExplanationTemplate(e.target.value)}
                 />
                 <p className="text-xs text-slate-500">
-                  Dùng <code className="rounded bg-slate-100 px-1">{"{ANSWER}"}</code>{" "}
-                  để chèn đáp án đúng (A/B/C/D).
+                  Dùng{" "}
+                  <code className="rounded-md bg-sky-50 px-1.5 py-0.5 text-sky-700">
+                    {"{ANSWER}"}
+                  </code>{" "}
+                  để chèn đáp án đúng.
                 </p>
               </div>
               <button
                 type="button"
                 onClick={() => docxInputRef.current?.click()}
-                className="flex w-full flex-col items-center gap-2 rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/60 px-4 py-8 text-center transition hover:bg-amber-50"
+                className="flex w-full flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-sky-200 bg-white px-4 py-8 text-center transition hover:border-sky-300 hover:bg-sky-50/50"
               >
-                <FileType2 className="size-8 text-amber-600" />
+                <span className="flex size-12 items-center justify-center rounded-2xl bg-sky-100 text-sky-600">
+                  <FileType2 className="size-6" />
+                </span>
                 <span className="text-sm font-bold text-slate-700">
                   {fileName || "Chọn file Word (.docx)"}
                 </span>
                 <span className="text-xs text-slate-500">
-                  Hệ thống tách câu hỏi + tự tạo cột Explanation
+                  Tách câu hỏi + tạo Explanation đơn giản
                 </span>
               </button>
               <input
@@ -455,28 +445,43 @@ function ImportDialog({
             </div>
           ) : (
             <div className="space-y-4">
-              <div className="rounded-2xl border border-violet-100 bg-violet-50/70 p-3 text-xs leading-relaxed text-slate-600">
-                <p className="mb-1 flex items-center gap-1.5 font-bold text-violet-800">
-                  <Sparkles className="size-3.5" /> Dùng ChatGPT viết giải thích chi tiết
+              <div className="rounded-2xl border border-sky-100 bg-sky-50/60 px-3.5 py-3">
+                <p className="mb-2 text-xs font-bold text-sky-800">
+                  3 bước lấy giải thích chi tiết
                 </p>
-                <ol className="list-decimal space-y-0.5 pl-4">
-                  <li>Dán đề hoặc tải Word</li>
-                  <li>Tạo prompt → dán vào ChatGPT</li>
-                  <li>Dán CSV ChatGPT trả về → nhập vào hệ thống</li>
-                </ol>
+                <div className="flex flex-col gap-1.5 text-xs text-slate-600 sm:flex-row sm:gap-3">
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">
+                      1
+                    </span>
+                    Dán đề / tải Word
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">
+                      2
+                    </span>
+                    Prompt → ChatGPT
+                  </span>
+                  <span className="inline-flex items-center gap-1.5">
+                    <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-500 text-[10px] font-bold text-white">
+                      3
+                    </span>
+                    Dán CSV về đây
+                  </span>
+                </div>
               </div>
 
               <div className="space-y-2">
                 <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label htmlFor="chatgpt-source">Nội dung đề / câu hỏi</Label>
+                  <Label htmlFor="chatgpt-source">Nội dung đề</Label>
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="gap-1.5 rounded-xl"
+                    className="h-8 gap-1.5 rounded-xl border-sky-100 text-sky-700 hover:bg-sky-50"
                     onClick={() => chatgptDocxRef.current?.click()}
                   >
-                    <FileType2 className="size-3.5" /> Tải Word
+                    <FileType2 className="size-3.5" /> Tải Word / TXT
                   </Button>
                   <input
                     ref={chatgptDocxRef}
@@ -501,8 +506,8 @@ function ImportDialog({
                 </div>
                 <Textarea
                   id="chatgpt-source"
-                  className="min-h-28 rounded-xl font-mono text-xs"
-                  placeholder="Dán đề thi / danh sách câu hỏi (có A B C D và đáp án nếu có)..."
+                  className="min-h-24 rounded-xl border-sky-100 text-sm"
+                  placeholder="Dán đề thi / câu hỏi (A B C D + đáp án nếu có)..."
                   value={chatgptSource}
                   onChange={(e) => setChatgptSource(e.target.value)}
                 />
@@ -511,7 +516,7 @@ function ImportDialog({
               <div className="flex flex-wrap gap-2">
                 <Button
                   type="button"
-                  className="gap-2 rounded-xl bg-violet-600 hover:bg-violet-700"
+                  className="gap-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600"
                   onClick={generateChatGptPrompt}
                 >
                   <Sparkles className="size-4" /> Tạo &amp; sao chép prompt
@@ -522,7 +527,7 @@ function ImportDialog({
                   rel="noreferrer"
                   className={cn(
                     buttonVariants({ variant: "outline" }),
-                    "rounded-xl"
+                    "rounded-xl border-sky-100 text-sky-700 hover:bg-sky-50"
                   )}
                 >
                   Mở ChatGPT
@@ -537,7 +542,7 @@ function ImportDialog({
                       type="button"
                       variant="outline"
                       size="sm"
-                      className="gap-1.5 rounded-xl"
+                      className="h-8 gap-1.5 rounded-xl border-sky-100 text-sky-700 hover:bg-sky-50"
                       onClick={() => {
                         void navigator.clipboard.writeText(chatgptPrompt).then(
                           () => toast.success("Đã sao chép prompt"),
@@ -549,7 +554,7 @@ function ImportDialog({
                     </Button>
                   </div>
                   <Textarea
-                    className="min-h-24 rounded-xl font-mono text-[11px] text-slate-600"
+                    className="min-h-20 rounded-xl border-sky-100 bg-slate-50/80 font-mono text-[11px] text-slate-600"
                     value={chatgptPrompt}
                     readOnly
                   />
@@ -557,18 +562,17 @@ function ImportDialog({
               ) : null}
 
               <div className="space-y-2">
-                <Label htmlFor="chatgpt-reply">Dán CSV từ ChatGPT</Label>
+                <Label htmlFor="chatgpt-reply">CSV từ ChatGPT</Label>
                 <Textarea
                   id="chatgpt-reply"
-                  className="min-h-28 rounded-xl font-mono text-xs"
-                  placeholder={'Dán nguyên phản hồi CSV (kể cả khối ```csv ... ```)...'}
+                  className="min-h-24 rounded-xl border-sky-100 text-sm"
+                  placeholder="Dán CSV ChatGPT trả về (kể cả khối code)..."
                   value={chatgptReply}
                   onChange={(e) => setChatgptReply(e.target.value)}
                 />
                 <Button
                   type="button"
-                  variant="outline"
-                  className="gap-2 rounded-xl"
+                  className="gap-2 rounded-xl bg-sky-500 text-white hover:bg-sky-600"
                   disabled={!chatgptReply.trim()}
                   onClick={() => parseCsvText(chatgptReply)}
                 >
@@ -579,19 +583,20 @@ function ImportDialog({
           )}
 
           {parsing ? (
-            <p className="flex items-center gap-2 text-sm text-slate-500">
+            <p className="flex items-center gap-2 text-sm text-sky-600">
               <Loader2 className="size-4 animate-spin" /> Đang đọc file...
             </p>
           ) : rows.length > 0 ? (
-            <div className="space-y-3">
+            <div className="space-y-3 rounded-2xl border border-emerald-100 bg-emerald-50/40 p-3">
               <div className="flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm font-bold text-emerald-600">
+                <p className="text-sm font-bold text-emerald-700">
                   Sẵn sàng: {rows.length} câu hỏi
                 </p>
                 <Button
                   type="button"
                   variant="outline"
-                  className="gap-2 rounded-xl"
+                  size="sm"
+                  className="h-8 gap-1.5 rounded-xl border-emerald-200 text-emerald-700 hover:bg-emerald-50"
                   onClick={() =>
                     downloadTextFile(
                       mode === "chatgpt"
@@ -602,10 +607,10 @@ function ImportDialog({
                     )
                   }
                 >
-                  <Download className="size-4" /> Tải CSV đã chuyển
+                  <Download className="size-3.5" /> Tải CSV
                 </Button>
               </div>
-              <div className="max-h-48 overflow-auto rounded-xl border border-slate-100">
+              <div className="max-h-48 overflow-auto rounded-xl border border-white bg-white">
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -620,8 +625,10 @@ function ImportDialog({
                         <TableCell className="max-w-[220px] truncate text-sm">
                           {row.Question}
                         </TableCell>
-                        <TableCell className="font-bold">
-                          {row["Correct Answer"]}
+                        <TableCell>
+                          <span className="inline-flex size-7 items-center justify-center rounded-lg bg-sky-100 text-xs font-bold text-sky-700">
+                            {row["Correct Answer"]}
+                          </span>
                         </TableCell>
                         <TableCell className="max-w-[180px] truncate text-xs text-slate-500">
                           {row.Explanation}
@@ -632,7 +639,7 @@ function ImportDialog({
                 </Table>
               </div>
               {rows.length > 8 ? (
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-slate-500">
                   Đang xem 8/{rows.length} câu — import sẽ lấy đủ.
                 </p>
               ) : null}
@@ -648,7 +655,7 @@ function ImportDialog({
             type="button"
             disabled={!subjectId || !rows.length || importMutation.isPending}
             onClick={() => importMutation.mutate()}
-            className="kid-btn gap-2 bg-emerald-500 hover:bg-emerald-600"
+            className="kid-btn gap-2 bg-emerald-500 text-white hover:bg-emerald-600"
           >
             {importMutation.isPending ? (
               <Loader2 className="animate-spin" />
@@ -754,7 +761,17 @@ export function QuestionsManager() {
             className="h-10 rounded-xl pl-9"
           />
         </div>
-        <Select value={subjectFilter} onValueChange={(v) => setSubjectFilter(v ?? "all")}>
+        <Select
+          value={subjectFilter}
+          onValueChange={(v) => setSubjectFilter(v ?? "all")}
+          items={[
+            { value: "all", label: "Tất cả môn học" },
+            ...(subjects?.map((subject) => ({
+              value: subject.id,
+              label: subject.name,
+            })) ?? []),
+          ]}
+        >
           <SelectTrigger className="h-10 min-w-40 rounded-xl">
             <SelectValue placeholder="Môn học" />
           </SelectTrigger>

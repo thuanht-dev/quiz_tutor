@@ -65,7 +65,17 @@ export function AttemptsList() {
       <PageHeader title="Bài làm" description="Xem lại kết quả bài làm của học sinh" />
 
       <div className="mb-5 flex flex-wrap gap-3">
-        <Select value={studentFilter} onValueChange={(v) => setStudentFilter(v ?? "all")}>
+        <Select
+          value={studentFilter}
+          onValueChange={(v) => setStudentFilter(v ?? "all")}
+          items={[
+            { value: "all", label: "Tất cả học sinh" },
+            ...(students?.map((student) => ({
+              value: student.id,
+              label: student.display_name,
+            })) ?? []),
+          ]}
+        >
           <SelectTrigger className="h-10 min-w-40 rounded-xl">
             <SelectValue placeholder="Học sinh" />
           </SelectTrigger>
@@ -79,7 +89,17 @@ export function AttemptsList() {
           </SelectContent>
         </Select>
 
-        <Select value={quizFilter} onValueChange={(v) => setQuizFilter(v ?? "all")}>
+        <Select
+          value={quizFilter}
+          onValueChange={(v) => setQuizFilter(v ?? "all")}
+          items={[
+            { value: "all", label: "Tất cả quiz" },
+            ...(quizzes?.map((quiz) => ({
+              value: quiz.id,
+              label: quiz.title,
+            })) ?? []),
+          ]}
+        >
           <SelectTrigger className="h-10 min-w-40 rounded-xl">
             <SelectValue placeholder="Quiz" />
           </SelectTrigger>

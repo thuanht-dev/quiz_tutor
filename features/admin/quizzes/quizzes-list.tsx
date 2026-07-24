@@ -88,7 +88,17 @@ export function QuizzesList() {
       />
 
       <div className="mb-5 flex flex-wrap gap-3">
-        <Select value={subjectFilter} onValueChange={(v) => setSubjectFilter(v ?? "all")}>
+        <Select
+          value={subjectFilter}
+          onValueChange={(v) => setSubjectFilter(v ?? "all")}
+          items={[
+            { value: "all", label: "Tất cả môn học" },
+            ...(subjects?.map((subject) => ({
+              value: subject.id,
+              label: subject.name,
+            })) ?? []),
+          ]}
+        >
           <SelectTrigger className="h-10 min-w-40 rounded-xl">
             <SelectValue placeholder="Môn học" />
           </SelectTrigger>
@@ -102,7 +112,17 @@ export function QuizzesList() {
           </SelectContent>
         </Select>
 
-        <Select value={statusFilter} onValueChange={(v) => setStatusFilter(v ?? "all")}>
+        <Select
+          value={statusFilter}
+          onValueChange={(v) => setStatusFilter(v ?? "all")}
+          items={[
+            { value: "all", label: "Tất cả trạng thái" },
+            ...Object.entries(QUIZ_STATUS_LABELS).map(([value, label]) => ({
+              value,
+              label,
+            })),
+          ]}
+        >
           <SelectTrigger className="h-10 min-w-40 rounded-xl">
             <SelectValue placeholder="Trạng thái" />
           </SelectTrigger>

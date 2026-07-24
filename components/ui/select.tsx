@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils"
 import { ChevronDownIcon, CheckIcon, ChevronUpIcon } from "lucide-react"
 
 const Select = SelectPrimitive.Root
+/** Pass `items={[{ value, label }]}` on Select so SelectValue shows labels, not raw IDs. */
 
 function SelectGroup({ className, ...props }: SelectPrimitive.Group.Props) {
   return (

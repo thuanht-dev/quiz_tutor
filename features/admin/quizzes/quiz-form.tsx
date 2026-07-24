@@ -98,7 +98,16 @@ export function QuizForm({
             control={form.control}
             name="subject_id"
             render={({ field }) => (
-              <Select value={field.value} onValueChange={(v) => field.onChange(v ?? "")}>
+              <Select
+                value={field.value}
+                onValueChange={(v) => field.onChange(v ?? "")}
+                items={
+                  subjects?.map((subject) => ({
+                    value: subject.id,
+                    label: subject.name,
+                  })) ?? []
+                }
+              >
                 <SelectTrigger className="h-11 w-full rounded-xl">
                   <SelectValue placeholder="Chọn môn học" />
                 </SelectTrigger>
@@ -125,7 +134,14 @@ export function QuizForm({
             control={form.control}
             name="status"
             render={({ field }) => (
-              <Select value={field.value} onValueChange={(v) => field.onChange(v ?? "")}>
+              <Select
+                value={field.value}
+                onValueChange={(v) => field.onChange(v ?? "")}
+                items={Object.entries(QUIZ_STATUS_LABELS).map(([value, label]) => ({
+                  value,
+                  label,
+                }))}
+              >
                 <SelectTrigger className="h-11 w-full rounded-xl">
                   <SelectValue placeholder="Chọn trạng thái" />
                 </SelectTrigger>

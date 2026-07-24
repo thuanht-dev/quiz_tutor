@@ -102,7 +102,16 @@ export function QuestionForm({
             control={form.control}
             name="subject_id"
             render={({ field }) => (
-              <Select value={field.value} onValueChange={(v) => field.onChange(v ?? "")}>
+              <Select
+                value={field.value}
+                onValueChange={(v) => field.onChange(v ?? "")}
+                items={
+                  subjects?.map((subject) => ({
+                    value: subject.id,
+                    label: subject.name,
+                  })) ?? []
+                }
+              >
                 <SelectTrigger className="h-11 w-full rounded-xl">
                   <SelectValue placeholder="Chọn môn học" />
                 </SelectTrigger>
