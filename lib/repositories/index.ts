@@ -224,6 +224,7 @@ export async function createQuiz(values: QuizValues) {
       title: values.title,
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
+      pass_percent: values.pass_percent ?? 85,
       status: values.status,
       created_at: new Date().toISOString(),
     };
@@ -238,6 +239,7 @@ export async function createQuiz(values: QuizValues) {
       title: values.title,
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
+      pass_percent: values.pass_percent ?? 85,
       status: values.status,
     })
     .select()
@@ -255,6 +257,7 @@ export async function updateQuiz(id: string, values: QuizValues) {
       ...values,
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
+      pass_percent: values.pass_percent ?? 85,
     };
     return enrichQuiz(db.quizzes[idx]);
   }
@@ -266,6 +269,7 @@ export async function updateQuiz(id: string, values: QuizValues) {
       title: values.title,
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
+      pass_percent: values.pass_percent ?? 85,
       status: values.status,
     })
     .eq("id", id)
@@ -799,7 +803,8 @@ export async function listStudentHomeData(studentId: string) {
           (a) =>
             a.student_id === studentId &&
             a.quiz_id === quiz.id &&
-            a.status !== "in_progress"
+            a.status !== "in_progress" &&
+            !a.is_retry_wrong
         );
         const best = attempts.reduce<Attempt | null>((acc, cur) => {
           if (!acc || cur.score > acc.score) return cur;
@@ -811,6 +816,7 @@ export async function listStudentHomeData(studentId: string) {
           best_max_score: best?.max_score ?? null,
           attempt_count: attempts.length,
           completed: attempts.length > 0,
+          best_passed: best?.passed ?? null,
         };
         return card;
       });
@@ -844,7 +850,9 @@ export async function listStudentHomeData(studentId: string) {
   ]);
 
   const cards: StudentQuizCard[] = (quizzes ?? []).map((quiz) => {
-    const mine = (attempts ?? []).filter((a) => a.quiz_id === quiz.id);
+    const mine = (attempts ?? []).filter(
+      (a) => a.quiz_id === quiz.id && !a.is_retry_wrong
+    );
     const best = mine.reduce<Attempt | null>((acc, cur) => {
       if (!acc || cur.score > acc.score) return cur as Attempt;
       return acc;
@@ -856,6 +864,7 @@ export async function listStudentHomeData(studentId: string) {
       best_max_score: best?.max_score ?? null,
       attempt_count: mine.length,
       completed: mine.length > 0,
+      best_passed: best?.passed ?? null,
     } as StudentQuizCard;
   });
 
@@ -865,7 +874,10 @@ export async function listStudentHomeData(studentId: string) {
   };
 }
 
-export async function startAttempt(quizId: string): Promise<Attempt> {
+export async function startAttempt(
+  quizId: string,
+  parentAttemptId?: string | null
+): Promise<Attempt> {
   const profile = await getCurrentProfile();
   if (!profile || profile.role !== "student") {
     throw new Error("Chỉ học sinh mới được làm bài");
@@ -876,7 +888,29 @@ export async function startAttempt(quizId: string): Promise<Attempt> {
     if (!quiz || quiz.status !== "published") {
       throw new Error("Quiz không khả dụng");
     }
-    const questions = getQuizQuestionsDetailed(quizId);
+
+    let questions = getQuizQuestionsDetailed(quizId);
+    let is_retry_wrong = false;
+    let parent_attempt_id: string | null = null;
+
+    if (parentAttemptId) {
+      const parent = db.attempts.find(
+        (a) =>
+          a.id === parentAttemptId &&
+          a.student_id === profile.id &&
+          a.quiz_id === quizId &&
+          a.status !== "in_progress"
+      );
+      if (!parent) throw new Error("Không tìm thấy bài làm gốc");
+      const wrongIds = db.attemptAnswers
+        .filter((a) => a.attempt_id === parentAttemptId && !a.is_correct)
+        .map((a) => a.question_id);
+      if (!wrongIds.length) throw new Error("Không còn câu sai để làm lại");
+      questions = questions.filter((q) => wrongIds.includes(q.id));
+      is_retry_wrong = true;
+      parent_attempt_id = parentAttemptId;
+    }
+
     if (!questions.length) throw new Error("Quiz chưa có câu hỏi");
     const attempt: Attempt = {
       id: uid(),
@@ -890,6 +924,9 @@ export async function startAttempt(quizId: string): Promise<Attempt> {
       total_questions: questions.length,
       duration_seconds: null,
       status: "in_progress",
+      passed: null,
+      parent_attempt_id,
+      is_retry_wrong,
       created_at: new Date().toISOString(),
     };
     db.attempts.push(attempt);
@@ -899,6 +936,7 @@ export async function startAttempt(quizId: string): Promise<Attempt> {
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("start_attempt", {
     p_quiz_id: quizId,
+    p_parent_attempt_id: parentAttemptId ?? null,
   });
   if (error) throw error;
   return data as Attempt;
@@ -946,6 +984,9 @@ export async function submitAttempt(
       });
     }
 
+    const quiz = db.quizzes.find((q) => q.id === attempt.quiz_id);
+    const percent =
+      attempt.max_score > 0 ? (score * 100) / attempt.max_score : 0;
     attempt.score = score;
     attempt.correct_count = correct_count;
     attempt.submitted_at = new Date().toISOString();
@@ -956,6 +997,7 @@ export async function submitAttempt(
       )
     );
     attempt.status = expired ? "expired" : "submitted";
+    attempt.passed = percent >= (quiz?.pass_percent ?? 85);
     return enrichAttempt(attempt);
   }
 
@@ -969,11 +1011,27 @@ export async function submitAttempt(
   return data as Attempt;
 }
 
-export async function getPlayQuiz(quizId: string) {
+export async function getPlayQuiz(
+  quizId: string,
+  parentAttemptId?: string | null
+) {
   const quiz = await getQuiz(quizId);
   if (!quiz || quiz.status !== "published") return null;
-  const questions = await listQuizQuestions(quizId);
-  // Strip is_correct for play UI
+
+  let questions = await listQuizQuestions(quizId);
+
+  if (parentAttemptId) {
+    const parent = await getAttempt(parentAttemptId);
+    if (!parent || parent.quiz_id !== quizId) return null;
+    const wrongIds = new Set(
+      (parent.answers ?? [])
+        .filter((a) => !a.is_correct)
+        .map((a) => a.question_id)
+    );
+    questions = questions.filter((q) => wrongIds.has(q.id));
+    if (!questions.length) return null;
+  }
+
   const safeQuestions = questions.map((q) => ({
     ...q,
     options: q.options?.map(({ is_correct: _omit, ...rest }) => rest) ?? [],

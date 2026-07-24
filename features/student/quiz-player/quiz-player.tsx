@@ -58,11 +58,13 @@ export function QuizPlayer({
   questions,
   attemptId,
   timeLimit,
+  isRetryWrong = false,
 }: {
   quiz: Quiz;
   questions: Question[];
   attemptId: string;
   timeLimit: number | null;
+  isRetryWrong?: boolean;
 }) {
   const router = useRouter();
 
@@ -166,6 +168,11 @@ export function QuizPlayer({
   return (
     <div className="mx-auto max-w-2xl space-y-6 pb-10">
       <div className="kid-card space-y-3 p-4">
+        {isRetryWrong ? (
+          <div className="rounded-2xl bg-amber-50 px-3 py-2 text-sm font-bold text-amber-800">
+            Đang làm lại các câu sai — cần đạt từ {quiz.pass_percent ?? 85}% trở lên.
+          </div>
+        ) : null}
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <p className="truncate font-display text-lg font-bold text-slate-800">
@@ -173,6 +180,7 @@ export function QuizPlayer({
             </p>
             <p className="text-sm text-slate-500">
               Câu {currentIndex + 1} / {total}
+              {!isRetryWrong ? ` · Đạt từ ${quiz.pass_percent ?? 85}%` : null}
             </p>
           </div>
           {timeLimit != null ? (

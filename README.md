@@ -75,7 +75,16 @@ supabase/migrations/ # schema + RLS + RPC
 stores/              # Zustand quiz session
 ```
 
-## Import câu hỏi
+## Tính năng mới: điểm đạt & làm lại câu sai
+
+- Mỗi quiz có **Điểm đạt (%)** (mặc định 85) — cấu hình trong form tạo/sửa quiz.
+- Sau khi nộp, hệ thống lưu attempt + từng câu trả lời; tutor xem tại `/admin/attempts`.
+- Kết quả hiện **ĐẠT / CHƯA ĐẠT** và nút **Làm lại các câu sai**.
+
+Sau khi pull code, chạy migration trên Supabase SQL Editor:
+
+`supabase/migrations/20260324000003_pass_and_retry.sql`
+
 
 CSV/Excel cột: `Question, A, B, C, D, Correct Answer, Explanation, Image URL`
 

@@ -11,21 +11,27 @@ export const metadata = { title: "Làm bài" };
 
 export default async function PlayQuizPage({
   params,
+  searchParams,
 }: {
   params: Promise<{ id: string }>;
+  searchParams: Promise<{ retryFrom?: string }>;
 }) {
   const { id } = await params;
-  const play = await getPlayQuiz(id);
+  const { retryFrom } = await searchParams;
+  const parentAttemptId = retryFrom || null;
+
+  const play = await getPlayQuiz(id, parentAttemptId);
   if (!play) notFound();
 
   try {
-    const attempt = await startAttempt(id);
+    const attempt = await startAttempt(id, parentAttemptId);
     return (
       <QuizPlayer
         quiz={play.quiz}
         questions={play.questions}
         attemptId={attempt.id}
         timeLimit={play.quiz.time_limit_seconds ?? null}
+        isRetryWrong={!!parentAttemptId}
       />
     );
   } catch (error) {

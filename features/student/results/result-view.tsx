@@ -9,6 +9,7 @@ import {
   Home,
   RotateCcw,
   Sparkles,
+  Target,
   Trophy,
   XCircle,
 } from "lucide-react";
@@ -142,23 +143,40 @@ function ReviewItem({ index, answer }: { index: number; answer: AttemptAnswer })
 export function ResultView({ attempt }: { attempt: Attempt }) {
   const percent = scorePercent(attempt.score, attempt.max_score);
   const wrong = Math.max(0, attempt.total_questions - attempt.correct_count);
-  const ringColor = percent >= 80 ? "#22C55E" : percent >= 50 ? "#F59E0B" : "#F43F5E";
-  const message =
-    percent >= 80
-      ? "Xuất sắc lắm! 🎉"
-      : percent >= 50
-        ? "Làm tốt lắm, cố lên nhé! 💪"
-        : "Đừng nản, luyện thêm nhé! 🌱";
+  const passPercent = attempt.quiz?.pass_percent ?? 85;
+  const passed = attempt.passed ?? percent >= passPercent;
+  const wrongAnswers = (attempt.answers ?? []).filter((a) => !a.is_correct);
+  const ringColor = passed ? "#22C55E" : percent >= 50 ? "#F59E0B" : "#F43F5E";
+  const message = passed
+    ? "Đạt rồi! Giỏi quá! 🎉"
+    : attempt.is_retry_wrong
+      ? "Chưa đạt, luyện thêm các câu sai nhé! 💪"
+      : "Chưa đạt yêu cầu, làm lại các câu sai nhé! 🌱";
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 pb-10">
       <div className="relative overflow-hidden rounded-3xl">
-        <Confetti count={percent >= 50 ? 46 : 22} />
+        <Confetti count={passed ? 46 : 18} />
         <div className="kid-card relative space-y-6 p-6 text-center sm:p-8">
           <div>
             <p className="font-display text-2xl font-bold text-slate-800">{message}</p>
             <p className="mt-1 text-sm text-slate-500">{attempt.quiz?.title}</p>
+            {attempt.is_retry_wrong ? (
+              <Badge className="mt-2 border-0 bg-amber-100 text-amber-800">
+                Bài làm lại câu sai
+              </Badge>
+            ) : null}
           </div>
+
+          <Badge
+            className={cn(
+              "mx-auto gap-1 border-0 px-4 py-1.5 text-sm",
+              passed ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+            )}
+          >
+            <Target className="size-4" />
+            {passed ? "ĐẠT" : "CHƯA ĐẠT"} · cần ≥ {passPercent}%
+          </Badge>
 
           <motion.div
             initial={{ scale: 0.6, opacity: 0 }}
@@ -209,11 +227,19 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
             >
               <Home className="size-4" /> Về trang chủ
             </Link>
+            {wrongAnswers.length > 0 ? (
+              <Link
+                href={`/quizzes/${attempt.quiz_id}/play?retryFrom=${attempt.id}`}
+                className="kid-btn inline-flex items-center justify-center gap-2 bg-amber-500 text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-amber-600 hover:shadow-lg active:translate-y-0"
+              >
+                <RotateCcw className="size-4" /> Làm lại {wrongAnswers.length} câu sai
+              </Link>
+            ) : null}
             <Link
               href={`/quizzes/${attempt.quiz_id}/play`}
               className="kid-btn inline-flex items-center justify-center gap-2 bg-sky-500 text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-sky-600 hover:shadow-lg active:translate-y-0"
             >
-              <RotateCcw className="size-4" /> Làm lại
+              <RotateCcw className="size-4" /> Làm lại cả bài
             </Link>
           </div>
         </div>
@@ -223,6 +249,9 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
         <h2 className="flex items-center gap-2 font-display text-xl font-bold text-slate-800">
           <Sparkles className="size-5 text-sky-500" /> Xem lại bài làm
         </h2>
+        <p className="text-sm text-slate-500">
+          Bài làm đã được lưu — giáo viên có thể xem tại mục Bài làm.
+        </p>
         {(attempt.answers ?? []).map((answer, i) => (
           <ReviewItem key={answer.id} index={i} answer={answer} />
         ))}

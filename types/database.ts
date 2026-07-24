@@ -30,6 +30,7 @@ export interface Quiz {
   title: string;
   description: string | null;
   time_limit_seconds: number | null;
+  pass_percent: number;
   status: QuizStatus;
   created_at: string;
   updated_at?: string;
@@ -78,6 +79,9 @@ export interface Attempt {
   total_questions: number;
   duration_seconds: number | null;
   status: AttemptStatus;
+  passed: boolean | null;
+  parent_attempt_id: string | null;
+  is_retry_wrong: boolean;
   created_at: string;
   quiz?: Quiz;
   student?: Profile;
@@ -109,6 +113,7 @@ export interface StudentQuizCard extends Quiz {
   best_max_score: number | null;
   attempt_count: number;
   completed: boolean;
+  best_passed: boolean | null;
 }
 
 export interface ImportQuestionRow {

@@ -113,6 +113,7 @@ export function AttemptsList() {
                 <TableHead>Quiz</TableHead>
                 <TableHead>Môn học</TableHead>
                 <TableHead>Điểm</TableHead>
+                <TableHead>Kết quả</TableHead>
                 <TableHead>Thời gian làm</TableHead>
                 <TableHead>Trạng thái</TableHead>
                 <TableHead>Nộp bài</TableHead>
@@ -145,6 +146,23 @@ export function AttemptsList() {
                   <TableCell className="font-bold text-slate-700">
                     {attempt.score}/{attempt.max_score} (
                     {scorePercent(attempt.score, attempt.max_score)}%)
+                    {attempt.is_retry_wrong ? (
+                      <span className="ml-1 text-xs font-normal text-amber-600">
+                        (câu sai)
+                      </span>
+                    ) : null}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      className={cn(
+                        "border-0",
+                        attempt.passed
+                          ? "bg-emerald-100 text-emerald-700"
+                          : "bg-rose-100 text-rose-700"
+                      )}
+                    >
+                      {attempt.passed ? "Đạt" : "Chưa đạt"}
+                    </Badge>
                   </TableCell>
                   <TableCell>{formatDuration(attempt.duration_seconds)}</TableCell>
                   <TableCell>

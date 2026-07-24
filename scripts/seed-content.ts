@@ -69,6 +69,7 @@ async function main() {
       description: "Luyện phép cộng trong phạm vi 100",
       time_limit_seconds: 600,
       status: "published",
+      pass_percent: 85,
     },
     {
       id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2",
@@ -77,6 +78,7 @@ async function main() {
       description: "Chọn từ đồng nghĩa phù hợp",
       time_limit_seconds: null,
       status: "published",
+      pass_percent: 85,
     },
     {
       id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3",
@@ -85,6 +87,7 @@ async function main() {
       description: "Nhận biết tên động vật bằng tiếng Anh",
       time_limit_seconds: 300,
       status: "draft",
+      pass_percent: 85,
     },
   ]);
   if (quizzesError) throw quizzesError;

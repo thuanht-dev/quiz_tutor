@@ -60,8 +60,16 @@ function QuizCard({ quiz, index }: { quiz: StudentQuizCard; index: number }) {
           {quiz.subject?.name ?? "Môn học"}
         </span>
         {quiz.completed ? (
-          <Badge className="gap-1 bg-emerald-100 text-emerald-700">
-            <CheckCircle2 className="size-3.5" /> Đã làm
+          <Badge
+            className={cn(
+              "gap-1",
+              quiz.best_passed
+                ? "bg-emerald-100 text-emerald-700"
+                : "bg-amber-100 text-amber-800"
+            )}
+          >
+            <CheckCircle2 className="size-3.5" />
+            {quiz.best_passed ? "Đạt" : "Chưa đạt"}
           </Badge>
         ) : null}
       </div>
@@ -95,7 +103,9 @@ function QuizCard({ quiz, index }: { quiz: StudentQuizCard; index: number }) {
       {percent !== null ? (
         <div className="flex items-center gap-2 rounded-2xl bg-amber-50 px-3 py-2 text-amber-700">
           <Trophy className="size-4 shrink-0" />
-          <span className="text-sm font-bold">Điểm cao nhất: {percent}%</span>
+          <span className="text-sm font-bold">
+            Điểm cao nhất: {percent}% (cần ≥ {quiz.pass_percent ?? 85}%)
+          </span>
           {quiz.attempt_count > 1 ? (
             <span className="ml-auto shrink-0 text-xs text-amber-600/80">
               Đã làm {quiz.attempt_count} lần

@@ -45,6 +45,7 @@ export function QuizForm({
       subject_id: quiz?.subject_id ?? "",
       description: quiz?.description ?? "",
       time_limit_seconds: quiz?.time_limit_seconds ?? null,
+      pass_percent: quiz?.pass_percent ?? 85,
       status: quiz?.status ?? "draft",
     },
   });
@@ -144,26 +145,50 @@ export function QuizForm({
         />
       </div>
 
-      <div className="space-y-2 sm:w-64">
-        <Label htmlFor="quiz-time-limit">Thời gian làm bài (phút, tuỳ chọn)</Label>
-        <Controller
-          control={form.control}
-          name="time_limit_seconds"
-          render={({ field }) => (
-            <Input
-              id="quiz-time-limit"
-              type="number"
-              min={1}
-              className="h-11 rounded-xl"
-              placeholder="Không giới hạn"
-              value={field.value ? Math.round(field.value / 60) : ""}
-              onChange={(e) => {
-                const raw = e.target.value;
-                field.onChange(raw.trim() === "" ? null : Math.round(Number(raw) * 60));
-              }}
-            />
-          )}
-        />
+      <div className="grid gap-4 sm:grid-cols-2">
+        <div className="space-y-2">
+          <Label htmlFor="quiz-time-limit">Thời gian làm bài (phút, tuỳ chọn)</Label>
+          <Controller
+            control={form.control}
+            name="time_limit_seconds"
+            render={({ field }) => (
+              <Input
+                id="quiz-time-limit"
+                type="number"
+                min={1}
+                className="h-11 rounded-xl"
+                placeholder="Không giới hạn"
+                value={field.value ? Math.round(field.value / 60) : ""}
+                onChange={(e) => {
+                  const raw = e.target.value;
+                  field.onChange(
+                    raw.trim() === "" ? null : Math.round(Number(raw) * 60)
+                  );
+                }}
+              />
+            )}
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="quiz-pass-percent">Điểm đạt (%)</Label>
+          <Input
+            id="quiz-pass-percent"
+            type="number"
+            min={1}
+            max={100}
+            className="h-11 rounded-xl"
+            {...form.register("pass_percent", { valueAsNumber: true })}
+          />
+          <p className="text-xs text-slate-500">
+            Học sinh đạt từ mức này trở lên được tính là &quot;Đạt&quot; (mặc định 85%).
+          </p>
+          {form.formState.errors.pass_percent ? (
+            <p className="text-sm text-rose-500">
+              {form.formState.errors.pass_percent.message}
+            </p>
+          ) : null}
+        </div>
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

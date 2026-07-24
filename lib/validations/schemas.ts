@@ -21,6 +21,7 @@ export const quizSchema = z.object({
   subject_id: z.string().min(1, "Chọn môn học"),
   description: z.string().optional().nullable(),
   time_limit_seconds: z.number().int().positive().optional().nullable(),
+  pass_percent: z.number().int().min(1).max(100),
   status: z.enum(["draft", "published", "archived"]),
 });
 

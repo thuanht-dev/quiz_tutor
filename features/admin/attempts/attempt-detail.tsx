@@ -45,7 +45,7 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
             description={`Học sinh: ${attempt.student?.display_name ?? "—"}`}
           />
 
-          <div className="mb-6 grid gap-4 sm:grid-cols-4">
+          <div className="mb-6 grid gap-4 sm:grid-cols-5">
             <div className="kid-card p-4 text-center">
               <p className="text-2xl font-bold text-sky-600">
                 {attempt.score}/{attempt.max_score}
@@ -70,11 +70,39 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
               </p>
               <p className="text-sm text-slate-500">Thời gian làm bài</p>
             </div>
+            <div className="kid-card p-4 text-center">
+              <p
+                className={cn(
+                  "text-2xl font-bold",
+                  attempt.passed ? "text-emerald-600" : "text-rose-600"
+                )}
+              >
+                {attempt.passed ? "ĐẠT" : "CHƯA"}
+              </p>
+              <p className="text-sm text-slate-500">
+                Yêu cầu ≥ {attempt.quiz?.pass_percent ?? 85}%
+              </p>
+            </div>
           </div>
 
           <div className="mb-6 flex flex-wrap items-center gap-3">
             <Badge className="border-0 bg-sky-100 text-sky-700">
               {STATUS_LABELS[attempt.status] ?? attempt.status}
+            </Badge>
+            {attempt.is_retry_wrong ? (
+              <Badge className="border-0 bg-amber-100 text-amber-800">
+                Làm lại câu sai
+              </Badge>
+            ) : null}
+            <Badge
+              className={cn(
+                "border-0",
+                attempt.passed
+                  ? "bg-emerald-100 text-emerald-700"
+                  : "bg-rose-100 text-rose-700"
+              )}
+            >
+              {attempt.passed ? "Đạt" : "Chưa đạt"}
             </Badge>
             <span className="text-sm text-slate-500">
               Nộp bài {relativeTime(attempt.submitted_at)}

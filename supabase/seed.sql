@@ -18,14 +18,15 @@ insert into public.subjects (id, name, color, icon, sort_order) values
 on conflict (id) do nothing;
 
 -- Quizzes
-insert into public.quizzes (id, subject_id, title, description, time_limit_seconds, status) values
+insert into public.quizzes (id, subject_id, title, description, time_limit_seconds, status, pass_percent) values
   (
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1',
     'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaa1',
     'Phép cộng lớp 2',
     'Luyện phép cộng trong phạm vi 100',
     600,
-    'published'
+    'published',
+    85
   ),
   (
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2',
@@ -33,7 +34,8 @@ insert into public.quizzes (id, subject_id, title, description, time_limit_secon
     'Từ đồng nghĩa',
     'Chọn từ đồng nghĩa phù hợp',
     null,
-    'published'
+    'published',
+    85
   ),
   (
     'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3',
@@ -41,7 +43,8 @@ insert into public.quizzes (id, subject_id, title, description, time_limit_secon
     'Animals vocabulary',
     'Nhận biết tên động vật bằng tiếng Anh',
     300,
-    'draft'
+    'draft',
+    85
   )
 on conflict (id) do nothing;
 
