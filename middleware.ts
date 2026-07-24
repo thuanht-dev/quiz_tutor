@@ -1,4 +1,3 @@
-import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 const PUBLIC = ["/login"];
@@ -12,78 +11,57 @@ function isMockMode() {
   );
 }
 
-async function updateSession(request: NextRequest) {
-  let supabaseResponse = NextResponse.next({ request });
-
-  if (isMockMode()) {
-    return supabaseResponse;
-  }
-
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
-    {
-      cookies: {
-        getAll() {
-          return request.cookies.getAll();
-        },
-        setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value }) =>
-            request.cookies.set(name, value)
-          );
-          supabaseResponse = NextResponse.next({ request });
-          cookiesToSet.forEach(({ name, value, options }) =>
-            supabaseResponse.cookies.set(name, value, options)
-          );
-        },
-      },
-    }
-  );
-
-  await supabase.auth.getUser();
-  return supabaseResponse;
+function hasSupabaseSession(request: NextRequest) {
+  return request.cookies
+    .getAll()
+    .some(
+      (c) =>
+        c.name.includes("auth-token") ||
+        (c.name.startsWith("sb-") && c.name.includes("auth"))
+    );
 }
 
-export async function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+export function middleware(request: NextRequest) {
+  try {
+    const { pathname } = request.nextUrl;
 
-  if (
-    pathname.startsWith("/_next") ||
-    pathname.startsWith("/api") ||
-    pathname.includes(".")
-  ) {
-    return NextResponse.next();
-  }
+    if (
+      pathname.startsWith("/_next") ||
+      pathname.startsWith("/api") ||
+      pathname.includes(".")
+    ) {
+      return NextResponse.next();
+    }
 
-  const response = await updateSession(request);
-
-  if (isMockMode()) {
-    const session = request.cookies.get(MOCK_COOKIE)?.value;
     const isPublic = PUBLIC.some((p) => pathname.startsWith(p));
 
-    if (!session && !isPublic) {
+    if (isMockMode()) {
+      const session = request.cookies.get(MOCK_COOKIE)?.value;
+      if (!session && !isPublic) {
+        const url = request.nextUrl.clone();
+        url.pathname = "/login";
+        return NextResponse.redirect(url);
+      }
+      return NextResponse.next();
+    }
+
+    // Edge-safe: only check cookie presence.
+    // Session refresh + role checks run in Server Components / layouts.
+    if (!hasSupabaseSession(request) && !isPublic) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
       return NextResponse.redirect(url);
     }
 
-    return response;
+    if (hasSupabaseSession(request) && pathname === "/login") {
+      // Let the login page redirect by role after reading the profile.
+      return NextResponse.next();
+    }
+
+    return NextResponse.next();
+  } catch {
+    return NextResponse.next();
   }
-
-  // Supabase mode: protect private routes when no session cookie present.
-  // Role-based redirects still happen in layouts / login.
-  const hasAuthCookie = request.cookies
-    .getAll()
-    .some((c) => c.name.includes("auth-token") || c.name.startsWith("sb-"));
-  const isPublic = PUBLIC.some((p) => pathname.startsWith(p));
-
-  if (!hasAuthCookie && !isPublic) {
-    const url = request.nextUrl.clone();
-    url.pathname = "/login";
-    return NextResponse.redirect(url);
-  }
-
-  return response;
 }
 
 export const config = {
