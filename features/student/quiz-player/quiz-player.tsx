@@ -3,7 +3,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
-import { AlertTriangle, ChevronLeft, ChevronRight, Clock, Loader2, Send } from "lucide-react";
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronLeft,
+  ChevronRight,
+  Clock,
+  Lightbulb,
+  Loader2,
+  Send,
+  XCircle,
+} from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
@@ -67,6 +77,8 @@ export function QuizPlayer({
   isRetryWrong?: boolean;
 }) {
   const router = useRouter();
+  const autoAdvance = quiz.auto_advance_on_answer ?? false;
+  const showExplain = quiz.show_explanation_on_answer ?? false;
 
   const sessionAttemptId = useQuizSession((s) => s.attemptId);
   const currentIndex = useQuizSession((s) => s.currentIndex);
@@ -83,6 +95,7 @@ export function QuizPlayer({
   const submittingRef = useRef(false);
   const autoSubmittedRef = useRef(false);
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const advanceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (sessionAttemptId !== attemptId) {
@@ -90,6 +103,19 @@ export function QuizPlayer({
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [attemptId]);
+
+  useEffect(() => {
+    return () => {
+      if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (advanceTimerRef.current) {
+      clearTimeout(advanceTimerRef.current);
+      advanceTimerRef.current = null;
+    }
+  }, [currentIndex]);
 
   const handleSubmit = useCallback(
     async (expired = false) => {
@@ -149,17 +175,41 @@ export function QuizPlayer({
   const isLast = currentIndex === total - 1;
   const lowTime = timeLimit != null && remainingSeconds != null && remainingSeconds <= 30;
 
-  function selectOption(optionId: string) {
-    if (!question) return;
-    setAnswer(question.id, optionId);
-    if (soundEnabled) playSelectBeep(audioCtxRef);
-  }
+  const selectedOptionId = question ? answers[question.id] : undefined;
+  const revealed = Boolean(showExplain && selectedOptionId);
+  const correctOption = useMemo(
+    () => (question?.options ?? []).find((o) => o.is_correct) ?? null,
+    [question]
+  );
+  const selectedIsCorrect = Boolean(
+    selectedOptionId && correctOption && selectedOptionId === correctOption.id
+  );
 
   function goNext() {
     if (currentIndex < total - 1) setCurrentIndex(currentIndex + 1);
   }
   function goPrev() {
     if (currentIndex > 0) setCurrentIndex(currentIndex - 1);
+  }
+
+  function scheduleAutoAdvance() {
+    if (!autoAdvance) return;
+    if (advanceTimerRef.current) clearTimeout(advanceTimerRef.current);
+    const delay = showExplain ? 2200 : 450;
+    advanceTimerRef.current = setTimeout(() => {
+      const idx = useQuizSession.getState().currentIndex;
+      if (idx < questions.length - 1) {
+        setCurrentIndex(idx + 1);
+      }
+    }, delay);
+  }
+
+  function selectOption(optionId: string) {
+    if (!question) return;
+    if (showExplain && answers[question.id]) return;
+    setAnswer(question.id, optionId);
+    if (soundEnabled) playSelectBeep(audioCtxRef);
+    scheduleAutoAdvance();
   }
 
   if (!question) {
@@ -256,25 +306,48 @@ export function QuizPlayer({
 
           <div className="grid gap-3 sm:grid-cols-2">
             {(question.options ?? []).map((option) => {
-              const selected = answers[question.id] === option.id;
+              const selected = selectedOptionId === option.id;
               const style = OPTION_STYLES[option.label];
+              let revealClass = "";
+              if (revealed) {
+                if (option.is_correct) {
+                  revealClass =
+                    "border-emerald-500 bg-emerald-50 text-emerald-900 shadow-sm";
+                } else if (selected) {
+                  revealClass = "border-rose-400 bg-rose-50 text-rose-800";
+                } else {
+                  revealClass = "border-slate-100 bg-slate-50 text-slate-400 opacity-70";
+                }
+              }
               return (
                 <motion.button
                   key={option.id}
                   type="button"
                   onClick={() => selectOption(option.id)}
-                  whileTap={{ scale: 0.96 }}
+                  disabled={revealed}
+                  whileTap={revealed ? undefined : { scale: 0.96 }}
                   className={cn(
                     "flex items-center gap-3 rounded-2xl border-2 p-4 text-left text-base font-semibold transition-all",
-                    selected
-                      ? cn("border-transparent shadow-lg", style.bg, style.text)
-                      : "border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:bg-teal-50"
+                    revealed
+                      ? revealClass
+                      : selected
+                        ? cn("border-transparent shadow-lg", style.bg, style.text)
+                        : "border-slate-200 bg-white text-slate-700 hover:border-teal-300 hover:bg-teal-50",
+                    revealed && "cursor-default"
                   )}
                 >
                   <span
                     className={cn(
                       "flex size-9 shrink-0 items-center justify-center rounded-xl font-display text-lg font-bold",
-                      selected ? "bg-white/25" : "bg-slate-100 text-slate-500"
+                      revealed
+                        ? option.is_correct
+                          ? "bg-emerald-500 text-white"
+                          : selected
+                            ? "bg-rose-400 text-white"
+                            : "bg-slate-200 text-slate-500"
+                        : selected
+                          ? "bg-white/25"
+                          : "bg-slate-100 text-slate-500"
                     )}
                   >
                     {option.label}
@@ -284,6 +357,52 @@ export function QuizPlayer({
               );
             })}
           </div>
+
+          {revealed ? (
+            <motion.div
+              initial={{ opacity: 0, y: 8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className={cn(
+                "rounded-2xl border px-4 py-3",
+                selectedIsCorrect
+                  ? "border-emerald-200 bg-emerald-50"
+                  : "border-rose-200 bg-rose-50"
+              )}
+            >
+              <p
+                className={cn(
+                  "flex items-center gap-2 text-sm font-bold",
+                  selectedIsCorrect ? "text-emerald-700" : "text-rose-700"
+                )}
+              >
+                {selectedIsCorrect ? (
+                  <>
+                    <CheckCircle2 className="size-4" /> Chính xác!
+                  </>
+                ) : (
+                  <>
+                    <XCircle className="size-4" /> Chưa đúng
+                    {correctOption ? ` — đáp án đúng là ${correctOption.label}` : null}
+                  </>
+                )}
+              </p>
+              {question.explanation ? (
+                <p className="mt-2 flex gap-2 text-sm leading-relaxed text-slate-700">
+                  <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" />
+                  <span>{question.explanation}</span>
+                </p>
+              ) : (
+                <p className="mt-2 text-xs text-slate-500">
+                  Câu hỏi này chưa có phần giải thích.
+                </p>
+              )}
+              {autoAdvance && !isLast ? (
+                <p className="mt-2 text-xs text-slate-500">
+                  Tự chuyển câu tiếp theo sau giây lát…
+                </p>
+              ) : null}
+            </motion.div>
+          ) : null}
         </motion.div>
       </AnimatePresence>
 

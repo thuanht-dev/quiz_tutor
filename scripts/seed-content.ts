@@ -70,6 +70,8 @@ async function main() {
       time_limit_seconds: 600,
       status: "published",
       pass_percent: 85,
+      auto_advance_on_answer: false,
+      show_explanation_on_answer: false,
     },
     {
       id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2",
@@ -79,6 +81,8 @@ async function main() {
       time_limit_seconds: null,
       status: "published",
       pass_percent: 85,
+      auto_advance_on_answer: false,
+      show_explanation_on_answer: false,
     },
     {
       id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3",
@@ -88,6 +92,8 @@ async function main() {
       time_limit_seconds: 300,
       status: "draft",
       pass_percent: 85,
+      auto_advance_on_answer: false,
+      show_explanation_on_answer: false,
     },
   ]);
   if (quizzesError) throw quizzesError;

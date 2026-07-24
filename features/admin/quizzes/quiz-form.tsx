@@ -9,6 +9,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import {
   Select,
@@ -46,6 +47,8 @@ export function QuizForm({
       description: quiz?.description ?? "",
       time_limit_seconds: quiz?.time_limit_seconds ?? null,
       pass_percent: quiz?.pass_percent ?? 85,
+      auto_advance_on_answer: quiz?.auto_advance_on_answer ?? false,
+      show_explanation_on_answer: quiz?.show_explanation_on_answer ?? false,
       status: quiz?.status ?? "draft",
     },
   });
@@ -212,6 +215,52 @@ export function QuizForm({
             </p>
           ) : null}
         </div>
+      </div>
+
+      <div className="space-y-3 rounded-2xl border border-teal-100 bg-teal-50/50 p-4">
+        <p className="text-sm font-bold text-teal-800">Tuỳ chọn khi làm bài</p>
+        <Controller
+          control={form.control}
+          name="auto_advance_on_answer"
+          render={({ field }) => (
+            <div className="flex items-start justify-between gap-4 rounded-xl bg-white px-4 py-3">
+              <div className="min-w-0">
+                <Label htmlFor="quiz-auto-advance" className="text-slate-800">
+                  Tự chuyển câu tiếp theo
+                </Label>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Sau khi chọn đáp án, tự sang câu kế (mặc định tắt).
+                </p>
+              </div>
+              <Switch
+                id="quiz-auto-advance"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </div>
+          )}
+        />
+        <Controller
+          control={form.control}
+          name="show_explanation_on_answer"
+          render={({ field }) => (
+            <div className="flex items-start justify-between gap-4 rounded-xl bg-white px-4 py-3">
+              <div className="min-w-0">
+                <Label htmlFor="quiz-show-explain" className="text-slate-800">
+                  Hiện giải thích ngay khi chọn
+                </Label>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Hiện đúng/sai và phần giải thích ngay sau khi chọn đáp án.
+                </p>
+              </div>
+              <Switch
+                id="quiz-show-explain"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </div>
+          )}
+        />
       </div>
 
       <div className="flex justify-end gap-2 pt-2">

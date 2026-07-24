@@ -225,6 +225,8 @@ export async function createQuiz(values: QuizValues) {
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
       pass_percent: values.pass_percent ?? 85,
+      auto_advance_on_answer: values.auto_advance_on_answer ?? false,
+      show_explanation_on_answer: values.show_explanation_on_answer ?? false,
       status: values.status,
       created_at: new Date().toISOString(),
     };
@@ -240,6 +242,8 @@ export async function createQuiz(values: QuizValues) {
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
       pass_percent: values.pass_percent ?? 85,
+      auto_advance_on_answer: values.auto_advance_on_answer ?? false,
+      show_explanation_on_answer: values.show_explanation_on_answer ?? false,
       status: values.status,
     })
     .select()
@@ -258,6 +262,8 @@ export async function updateQuiz(id: string, values: QuizValues) {
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
       pass_percent: values.pass_percent ?? 85,
+      auto_advance_on_answer: values.auto_advance_on_answer ?? false,
+      show_explanation_on_answer: values.show_explanation_on_answer ?? false,
     };
     return enrichQuiz(db.quizzes[idx]);
   }
@@ -270,6 +276,8 @@ export async function updateQuiz(id: string, values: QuizValues) {
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
       pass_percent: values.pass_percent ?? 85,
+      auto_advance_on_answer: values.auto_advance_on_answer ?? false,
+      show_explanation_on_answer: values.show_explanation_on_answer ?? false,
       status: values.status,
     })
     .eq("id", id)

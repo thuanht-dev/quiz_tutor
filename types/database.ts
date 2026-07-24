@@ -31,6 +31,8 @@ export interface Quiz {
   description: string | null;
   time_limit_seconds: number | null;
   pass_percent: number;
+  auto_advance_on_answer: boolean;
+  show_explanation_on_answer: boolean;
   status: QuizStatus;
   created_at: string;
   updated_at?: string;
