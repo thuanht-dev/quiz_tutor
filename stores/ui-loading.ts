@@ -21,6 +21,11 @@ export const useUiLoading = create<UiLoadingState>((set) => ({
     set((s) => ({ actionCount: Math.max(0, s.actionCount - 1) })),
 }));
 
+/** Clear stuck navigation overlay (e.g. after error / aborted nav). */
+export function resetNavigationLoading() {
+  useUiLoading.getState().endNavigation();
+}
+
 export function useIsBusy() {
   return useUiLoading(
     (s) => s.navigationPending || s.actionCount > 0

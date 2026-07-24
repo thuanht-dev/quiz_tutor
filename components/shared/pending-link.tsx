@@ -2,7 +2,13 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useTransition, type ComponentProps, type MouseEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useTransition,
+  type ComponentProps,
+  type MouseEvent,
+} from "react";
 import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useUiLoading } from "@/stores/ui-loading";
@@ -24,6 +30,19 @@ export function PendingLink({
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const startNavigation = useUiLoading((s) => s.startNavigation);
+  const endNavigation = useUiLoading((s) => s.endNavigation);
+  const wasPending = useRef(false);
+
+  useEffect(() => {
+    if (pending) {
+      wasPending.current = true;
+      return;
+    }
+    if (wasPending.current) {
+      wasPending.current = false;
+      endNavigation();
+    }
+  }, [pending, endNavigation]);
 
   function handleClick(event: MouseEvent<HTMLAnchorElement>) {
     onClick?.(event);
@@ -43,7 +62,12 @@ export function PendingLink({
       href={href}
       onClick={handleClick}
       aria-busy={pending || undefined}
-      className={cn(className, pending && loadingClassName, pending && "pointer-events-none opacity-80")}
+      data-no-progress
+      className={cn(
+        className,
+        pending && loadingClassName,
+        pending && "pointer-events-none opacity-80"
+      )}
       {...props}
     >
       {pending && showSpinner ? (

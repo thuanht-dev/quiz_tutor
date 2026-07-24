@@ -6,6 +6,8 @@ import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsBusy, useUiLoading } from "@/stores/ui-loading";
 
+const NAV_TIMEOUT_MS = 8_000;
+
 /** Top progress bar + soft overlay while navigating or running actions. */
 export function RouteProgress() {
   const pathname = usePathname();
@@ -24,6 +26,15 @@ export function RouteProgress() {
     }
   }, [key, endNavigation]);
 
+  // Failsafe: never leave the UI stuck if URL never changes
+  useEffect(() => {
+    if (!navigationPending) return;
+    const timer = window.setTimeout(() => {
+      endNavigation();
+    }, NAV_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [navigationPending, endNavigation]);
+
   useEffect(() => {
     function onClick(event: MouseEvent) {
       const target = event.target as HTMLElement | null;
@@ -32,9 +43,12 @@ export function RouteProgress() {
       if (event.defaultPrevented) return;
       if (event.button !== 0) return;
       if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return;
+      if (anchor.dataset.noProgress != null) return;
 
       const href = anchor.getAttribute("href");
-      if (!href || href.startsWith("#") || href.startsWith("mailto:")) return;
+      if (!href || href.startsWith("#") || href.startsWith("mailto:") || href.startsWith("tel:")) {
+        return;
+      }
       if (anchor.target === "_blank" || anchor.hasAttribute("download")) return;
 
       try {
@@ -64,11 +78,11 @@ export function RouteProgress() {
       />
       {navigationPending ? (
         <div
-          className="fixed inset-0 z-[90] flex items-center justify-center bg-sky-50/50 backdrop-blur-[1px]"
+          className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center bg-sky-50/40"
           aria-live="polite"
           aria-busy="true"
         >
-          <div className="flex items-center gap-3 rounded-2xl bg-white px-5 py-3 text-sm font-bold text-sky-700 shadow-lg shadow-sky-100">
+          <div className="flex items-center gap-3 rounded-2xl bg-white/95 px-5 py-3 text-sm font-bold text-sky-700 shadow-lg shadow-sky-100 ring-1 ring-sky-100">
             <Loader2 className="size-5 animate-spin" />
             Đang tải...
           </div>
