@@ -3,7 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { ClipboardList, Plus, Trash2 } from "lucide-react";
+import { ClipboardList, Loader2, Plus, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { PageHeader, EmptyState, ErrorState } from "@/components/shared/states";
 import { TableSkeleton } from "@/components/shared/skeletons";
@@ -56,11 +56,13 @@ export function QuizzesList() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteQuiz(id),
+    onMutate: () => toast.loading("Đang xoá quiz...", { id: "delete-quiz" }),
     onSuccess: () => {
-      toast.success("Đã xoá quiz");
+      toast.success("Đã xoá quiz", { id: "delete-quiz" });
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
     },
-    onError: (error: Error) => toast.error(error.message || "Không thể xoá quiz"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Không thể xoá quiz", { id: "delete-quiz" }),
   });
 
   function handleDelete(id: string, title: string) {
@@ -190,9 +192,15 @@ export function QuizzesList() {
                       size="icon"
                       className="rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                       onClick={() => handleDelete(quiz.id, quiz.title)}
+                      disabled={deleteMutation.isPending}
                       aria-label="Xoá"
                     >
-                      <Trash2 className="size-4" />
+                      {deleteMutation.isPending &&
+                      deleteMutation.variables === quiz.id ? (
+                        <Loader2 className="size-4 animate-spin" />
+                      ) : (
+                        <Trash2 className="size-4" />
+                      )}
                     </Button>
                   </TableCell>
                 </TableRow>

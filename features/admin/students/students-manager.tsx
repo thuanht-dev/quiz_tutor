@@ -73,12 +73,21 @@ function StudentDialog({
             password: values.password || undefined,
           })
         : createStudent(values),
+    onMutate: () =>
+      toast.loading(
+        isEdit ? "Đang lưu học sinh..." : "Đang tạo tài khoản...",
+        { id: "student-form" }
+      ),
     onSuccess: () => {
-      toast.success(isEdit ? "Đã cập nhật học sinh" : "Đã tạo tài khoản học sinh");
+      toast.success(
+        isEdit ? "Đã cập nhật học sinh" : "Đã tạo tài khoản học sinh",
+        { id: "student-form" }
+      );
       queryClient.invalidateQueries({ queryKey: ["students"] });
       onOpenChange(false);
     },
-    onError: (error: Error) => toast.error(error.message || "Có lỗi xảy ra"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Có lỗi xảy ra", { id: "student-form" }),
   });
 
   return (
@@ -200,12 +209,17 @@ function ResetPasswordDialog({
   const mutation = useMutation({
     mutationFn: (values: ResetPasswordValues) =>
       resetStudentPassword(student!.id, values.password),
+    onMutate: () =>
+      toast.loading("Đang đặt lại mật khẩu...", { id: "reset-password" }),
     onSuccess: () => {
-      toast.success("Đã đặt lại mật khẩu");
+      toast.success("Đã đặt lại mật khẩu", { id: "reset-password" });
       form.reset({ password: "" });
       onOpenChange(false);
     },
-    onError: (error: Error) => toast.error(error.message || "Không thể đặt lại mật khẩu"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Không thể đặt lại mật khẩu", {
+        id: "reset-password",
+      }),
   });
 
   return (
@@ -275,11 +289,14 @@ export function StudentsManager() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteStudent(id),
+    onMutate: () =>
+      toast.loading("Đang vô hiệu hoá tài khoản...", { id: "delete-student" }),
     onSuccess: () => {
-      toast.success("Đã vô hiệu hoá tài khoản");
+      toast.success("Đã vô hiệu hoá tài khoản", { id: "delete-student" });
       queryClient.invalidateQueries({ queryKey: ["students"] });
     },
-    onError: (error: Error) => toast.error(error.message || "Có lỗi xảy ra"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Có lỗi xảy ra", { id: "delete-student" }),
   });
 
   function openCreate() {
@@ -388,9 +405,15 @@ export function StudentsManager() {
                         size="icon"
                         className="rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                         onClick={() => handleDeactivate(student)}
+                        disabled={deleteMutation.isPending}
                         aria-label="Vô hiệu hoá"
                       >
-                        <UserRoundX className="size-4" />
+                        {deleteMutation.isPending &&
+                        deleteMutation.variables === student.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <UserRoundX className="size-4" />
+                        )}
                       </Button>
                     </div>
                   </TableCell>

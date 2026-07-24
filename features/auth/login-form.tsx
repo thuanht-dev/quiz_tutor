@@ -24,18 +24,22 @@ export function LoginForm() {
 
   async function onSubmit(values: LoginValues) {
     setLoading(true);
+    const toastId = toast.loading("Đang đăng nhập...");
     try {
       const result = await signInAction(values.username, values.password);
       if ("error" in result && result.error) {
-        toast.error(result.error);
+        toast.error(result.error, { id: toastId });
+        setLoading(false);
         return;
       }
-      toast.success("Đăng nhập thành công!");
+      toast.success("Đăng nhập thành công! Đang chuyển trang...", {
+        id: toastId,
+      });
       router.replace(result.role === "admin" ? "/admin" : "/");
       router.refresh();
+      // Keep loading until navigation; don't clear in finally on success
     } catch {
-      toast.error("Không thể đăng nhập");
-    } finally {
+      toast.error("Không thể đăng nhập", { id: toastId });
       setLoading(false);
     }
   }
@@ -113,7 +117,13 @@ export function LoginForm() {
               disabled={loading}
               className="kid-btn w-full bg-sky-500 hover:bg-sky-600"
             >
-              {loading ? <Loader2 className="animate-spin" /> : "Vào học thôi!"}
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin" /> Đang đăng nhập...
+                </>
+              ) : (
+                "Vào học thôi!"
+              )}
             </Button>
           </form>
 

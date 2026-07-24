@@ -56,13 +56,19 @@ function SubjectDialog({
   const mutation = useMutation({
     mutationFn: (values: SubjectValues) =>
       isEdit ? updateSubject(subject!.id, values) : createSubject(values),
+    onMutate: () =>
+      toast.loading(isEdit ? "Đang lưu môn học..." : "Đang tạo môn học...", {
+        id: "subject-form",
+      }),
     onSuccess: () => {
-      toast.success(isEdit ? "Đã cập nhật môn học" : "Đã tạo môn học mới");
+      toast.success(isEdit ? "Đã cập nhật môn học" : "Đã tạo môn học mới", {
+        id: "subject-form",
+      });
       queryClient.invalidateQueries({ queryKey: ["subjects"] });
       onOpenChange(false);
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Có lỗi xảy ra");
+      toast.error(error.message || "Có lỗi xảy ra", { id: "subject-form" });
     },
   });
 
@@ -183,12 +189,17 @@ export function SubjectsManager() {
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteSubject(id),
+    onMutate: () => {
+      toast.loading("Đang xoá môn học...", { id: "delete-subject" });
+    },
     onSuccess: () => {
-      toast.success("Đã xoá môn học");
+      toast.success("Đã xoá môn học", { id: "delete-subject" });
       queryClient.invalidateQueries({ queryKey: ["subjects"] });
     },
     onError: (error: Error) => {
-      toast.error(error.message || "Không thể xoá môn học");
+      toast.error(error.message || "Không thể xoá môn học", {
+        id: "delete-subject",
+      });
     },
   });
 
@@ -269,9 +280,15 @@ export function SubjectsManager() {
                     size="icon"
                     className="rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                     onClick={() => handleDelete(subject)}
+                    disabled={deleteMutation.isPending}
                     aria-label="Xoá"
                   >
-                    <Trash2 className="size-4" />
+                    {deleteMutation.isPending &&
+                    deleteMutation.variables === subject.id ? (
+                      <Loader2 className="size-4 animate-spin" />
+                    ) : (
+                      <Trash2 className="size-4" />
+                    )}
                   </Button>
                 </div>
               </div>

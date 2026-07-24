@@ -96,6 +96,9 @@ export function QuizPlayer({
       if (submittingRef.current) return;
       submittingRef.current = true;
       setSubmitting(true);
+      const toastId = toast.loading(
+        expired ? "Hết giờ — đang nộp bài..." : "Đang nộp bài..."
+      );
       try {
         const latestAnswers = useQuizSession.getState().answers;
         const payload = questions.map((question) => ({
@@ -103,11 +106,13 @@ export function QuizPlayer({
           selected_option_id: latestAnswers[question.id] ?? null,
         }));
         const result = await submitAttempt(attemptId, payload, expired);
+        toast.success("Đã nộp bài!", { id: toastId });
         reset();
         router.push(`/attempts/${result.id}`);
       } catch (error) {
         toast.error(
-          error instanceof Error ? error.message : "Không thể nộp bài, thử lại nhé!"
+          error instanceof Error ? error.message : "Không thể nộp bài, thử lại nhé!",
+          { id: toastId }
         );
         submittingRef.current = false;
         setSubmitting(false);

@@ -237,20 +237,26 @@ export function QuestionsManager() {
 
   const copyMutation = useMutation({
     mutationFn: (id: string) => copyQuestion(id),
+    onMutate: () => toast.loading("Đang sao chép...", { id: "copy-question" }),
     onSuccess: () => {
-      toast.success("Đã sao chép câu hỏi");
+      toast.success("Đã sao chép câu hỏi", { id: "copy-question" });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
-    onError: (error: Error) => toast.error(error.message || "Không thể sao chép"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Không thể sao chép", { id: "copy-question" }),
   });
 
   const deleteMutation = useMutation({
     mutationFn: (id: string) => deleteQuestion(id),
+    onMutate: () => toast.loading("Đang xoá câu hỏi...", { id: "delete-question" }),
     onSuccess: () => {
-      toast.success("Đã xoá câu hỏi");
+      toast.success("Đã xoá câu hỏi", { id: "delete-question" });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
     },
-    onError: (error: Error) => toast.error(error.message || "Không thể xoá câu hỏi"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Không thể xoá câu hỏi", {
+        id: "delete-question",
+      }),
   });
 
   function handleDelete(id: string) {
@@ -373,9 +379,15 @@ export function QuestionsManager() {
                         size="icon"
                         className="rounded-xl"
                         onClick={() => copyMutation.mutate(question.id)}
+                        disabled={copyMutation.isPending || deleteMutation.isPending}
                         aria-label="Sao chép"
                       >
-                        <Copy className="size-4" />
+                        {copyMutation.isPending &&
+                        copyMutation.variables === question.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Copy className="size-4" />
+                        )}
                       </Button>
                       <Link
                         href={`/admin/questions/${question.id}`}
@@ -392,9 +404,15 @@ export function QuestionsManager() {
                         size="icon"
                         className="rounded-xl text-rose-500 hover:bg-rose-50 hover:text-rose-600"
                         onClick={() => handleDelete(question.id)}
+                        disabled={deleteMutation.isPending || copyMutation.isPending}
                         aria-label="Xoá"
                       >
-                        <Trash2 className="size-4" />
+                        {deleteMutation.isPending &&
+                        deleteMutation.variables === question.id ? (
+                          <Loader2 className="size-4 animate-spin" />
+                        ) : (
+                          <Trash2 className="size-4" />
+                        )}
                       </Button>
                     </div>
                   </TableCell>

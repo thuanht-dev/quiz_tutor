@@ -71,8 +71,14 @@ export function QuestionForm({
   const mutation = useMutation({
     mutationFn: (values: QuestionValues) =>
       isEdit ? updateQuestion(question!.id, values) : createQuestion(values),
+    onMutate: () =>
+      toast.loading(isEdit ? "Đang lưu câu hỏi..." : "Đang tạo câu hỏi...", {
+        id: "question-form",
+      }),
     onSuccess: (result) => {
-      toast.success(isEdit ? "Đã lưu thay đổi" : "Đã tạo câu hỏi mới");
+      toast.success(isEdit ? "Đã lưu thay đổi" : "Đã tạo câu hỏi mới", {
+        id: "question-form",
+      });
       queryClient.invalidateQueries({ queryKey: ["questions"] });
       if (onSaved) {
         onSaved(result ?? null);
@@ -80,7 +86,8 @@ export function QuestionForm({
         router.push("/admin/questions");
       }
     },
-    onError: (error: Error) => toast.error(error.message || "Có lỗi xảy ra"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Có lỗi xảy ra", { id: "question-form" }),
   });
 
   return (

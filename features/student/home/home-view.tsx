@@ -13,6 +13,7 @@ import {
   Sparkles,
   Trophy,
 } from "lucide-react";
+import { PendingLink } from "@/components/shared/pending-link";
 import { Badge } from "@/components/ui/badge";
 import { EmptyState, PageHeader } from "@/components/shared/states";
 import { cn } from "@/lib/utils";
@@ -114,7 +115,7 @@ function QuizCard({ quiz, index }: { quiz: StudentQuizCard; index: number }) {
         </div>
       ) : null}
 
-      <Link
+      <PendingLink
         href={`/quizzes/${quiz.id}/play`}
         className="kid-btn mt-auto inline-flex items-center justify-center gap-2 text-white shadow-md transition-transform hover:-translate-y-0.5 hover:shadow-lg active:translate-y-0"
         style={{ backgroundColor: color }}
@@ -128,7 +129,7 @@ function QuizCard({ quiz, index }: { quiz: StudentQuizCard; index: number }) {
             <PlayCircle className="size-4" /> Làm bài
           </>
         )}
-      </Link>
+      </PendingLink>
     </motion.div>
   );
 }

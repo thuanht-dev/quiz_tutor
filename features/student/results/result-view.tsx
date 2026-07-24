@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import Link from "next/link";
 import { motion } from "framer-motion";
 import {
   CheckCircle2,
@@ -15,6 +14,7 @@ import {
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { buttonVariants } from "@/components/ui/button";
+import { PendingLink } from "@/components/shared/pending-link";
 import { cn } from "@/lib/utils";
 import { formatDuration, scorePercent } from "@/lib/utils/format";
 import type { Attempt, AttemptAnswer } from "@/types/database";
@@ -221,26 +221,26 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <Link
+            <PendingLink
               href="/"
               className={cn(buttonVariants({ variant: "outline", size: "lg" }), "kid-btn gap-2")}
             >
               <Home className="size-4" /> Về trang chủ
-            </Link>
+            </PendingLink>
             {wrongAnswers.length > 0 ? (
-              <Link
+              <PendingLink
                 href={`/quizzes/${attempt.quiz_id}/play?retryFrom=${attempt.id}`}
                 className="kid-btn inline-flex items-center justify-center gap-2 bg-amber-500 text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-amber-600 hover:shadow-lg active:translate-y-0"
               >
                 <RotateCcw className="size-4" /> Làm lại {wrongAnswers.length} câu sai
-              </Link>
+              </PendingLink>
             ) : null}
-            <Link
+            <PendingLink
               href={`/quizzes/${attempt.quiz_id}/play`}
               className="kid-btn inline-flex items-center justify-center gap-2 bg-sky-500 text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-sky-600 hover:shadow-lg active:translate-y-0"
             >
               <RotateCcw className="size-4" /> Làm lại cả bài
-            </Link>
+            </PendingLink>
           </div>
         </div>
       </div>

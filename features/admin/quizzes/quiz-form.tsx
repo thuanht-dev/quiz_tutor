@@ -53,8 +53,14 @@ export function QuizForm({
   const mutation = useMutation({
     mutationFn: (values: QuizValues) =>
       isEdit ? updateQuiz(quiz!.id, values) : createQuiz(values),
+    onMutate: () =>
+      toast.loading(isEdit ? "Đang lưu quiz..." : "Đang tạo quiz...", {
+        id: "quiz-form",
+      }),
     onSuccess: (result) => {
-      toast.success(isEdit ? "Đã lưu thay đổi" : "Đã tạo quiz mới");
+      toast.success(isEdit ? "Đã lưu thay đổi" : "Đã tạo quiz mới", {
+        id: "quiz-form",
+      });
       queryClient.invalidateQueries({ queryKey: ["quizzes"] });
       if (isEdit) queryClient.invalidateQueries({ queryKey: ["quiz", quiz!.id] });
       if (onSaved) {
@@ -63,7 +69,8 @@ export function QuizForm({
         router.push("/admin/quizzes");
       }
     },
-    onError: (error: Error) => toast.error(error.message || "Có lỗi xảy ra"),
+    onError: (error: Error) =>
+      toast.error(error.message || "Có lỗi xảy ra", { id: "quiz-form" }),
   });
 
   return (
