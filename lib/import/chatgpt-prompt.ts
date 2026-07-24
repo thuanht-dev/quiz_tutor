@@ -46,7 +46,7 @@ ${EXAMPLE_CSV}
 ${quizText.trim()}
 --- HẾT ĐỀ ---
 
-Hãy xuất CSV đầy đủ cho tất cả câu hỏi trong đề.`;
+Hãy xuất (chỉ file không cần gửi text) CSV đầy đủ cho tất cả câu hỏi trong đề.`;
 }
 
 /** Pull CSV body out of a ChatGPT-style reply (fenced code or raw). */
