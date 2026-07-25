@@ -3,14 +3,11 @@
 import { useRef, useState } from "react";
 import Link from "next/link";
 import Papa from "papaparse";
-import * as XLSX from "xlsx";
-import mammoth from "mammoth";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Copy,
   Download,
   FileUp,
-  FileType2,
   HelpCircle,
   Loader2,
   Pencil,
@@ -61,20 +58,16 @@ import {
   buildChatGptImportPrompt,
   extractCsvFromChatReply,
 } from "@/lib/import/chatgpt-prompt";
-import {
-  parseQuizTextToRows,
-  validateImportRows,
-} from "@/lib/import/parse-quiz-text";
+import { validateImportRows } from "@/lib/import/parse-quiz-text";
 import {
   SAMPLE_IMPORT_ROWS,
-  defaultExplanation,
   downloadTextFile,
   rowsToCsv,
 } from "@/lib/import/template";
 import { cn } from "@/lib/utils";
 import type { ImportQuestionRow } from "@/types/database";
 
-type ImportMode = "file" | "docx" | "chatgpt";
+type ImportMode = "csv" | "chatgpt";
 
 function downloadCsvTemplate() {
   downloadTextFile(
@@ -82,13 +75,6 @@ function downloadCsvTemplate() {
     rowsToCsv(SAMPLE_IMPORT_ROWS),
     "text/csv;charset=utf-8"
   );
-}
-
-function downloadXlsxTemplate() {
-  const worksheet = XLSX.utils.json_to_sheet(SAMPLE_IMPORT_ROWS);
-  const workbook = XLSX.utils.book_new();
-  XLSX.utils.book_append_sheet(workbook, worksheet, "Questions");
-  XLSX.writeFile(workbook, "questions-import-template.xlsx");
 }
 
 function ImportDialog({
@@ -100,16 +86,11 @@ function ImportDialog({
 }) {
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const docxInputRef = useRef<HTMLInputElement>(null);
-  const chatgptDocxRef = useRef<HTMLInputElement>(null);
-  const [mode, setMode] = useState<ImportMode>("file");
+  const [mode, setMode] = useState<ImportMode>("csv");
   const [subjectId, setSubjectId] = useState("");
   const [fileName, setFileName] = useState("");
   const [rows, setRows] = useState<ImportQuestionRow[]>([]);
   const [parsing, setParsing] = useState(false);
-  const [explanationTemplate, setExplanationTemplate] = useState(
-    "Đáp án đúng là {ANSWER}."
-  );
   const [chatgptSource, setChatgptSource] = useState("");
   const [chatgptPrompt, setChatgptPrompt] = useState("");
   const [chatgptReply, setChatgptReply] = useState("");
@@ -135,13 +116,11 @@ function ImportDialog({
     setFileName("");
     setRows([]);
     setSubjectId("");
-    setMode("file");
+    setMode("csv");
     setChatgptSource("");
     setChatgptPrompt("");
     setChatgptReply("");
     if (fileInputRef.current) fileInputRef.current.value = "";
-    if (docxInputRef.current) docxInputRef.current.value = "";
-    if (chatgptDocxRef.current) chatgptDocxRef.current.value = "";
     onOpenChange(false);
   }
 
@@ -160,7 +139,7 @@ function ImportDialog({
 
   function generateChatGptPrompt() {
     if (!chatgptSource.trim()) {
-      toast.error("Hãy dán đề hoặc tải file Word trước");
+      toast.error("Hãy dán nội dung đề trước");
       return;
     }
     const subjectName = subjects?.find((s) => s.id === subjectId)?.name;
@@ -174,26 +153,6 @@ function ImportDialog({
     );
   }
 
-  async function loadChatgptDocx(file: File) {
-    setParsing(true);
-    setFileName(file.name);
-    try {
-      const buffer = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-      const text = result.value.trim();
-      if (!text) {
-        toast.error("File Word không có nội dung chữ");
-        return;
-      }
-      setChatgptSource(text);
-      toast.success("Đã đọc đề từ Word — bấm Tạo prompt");
-    } catch {
-      toast.error("Không thể đọc file Word (.docx)");
-    } finally {
-      setParsing(false);
-    }
-  }
-
   function applyRows(next: ImportQuestionRow[]) {
     const errors = validateImportRows(next);
     if (errors.length) {
@@ -204,68 +163,27 @@ function ImportDialog({
     toast.success(`Đã nhận ${next.length} câu hỏi`);
   }
 
-  async function handleCsvOrExcel(file: File) {
+  async function handleCsv(file: File) {
     setParsing(true);
     setFileName(file.name);
-    const ext = file.name.split(".").pop()?.toLowerCase();
     try {
-      if (ext === "csv") {
-        await new Promise<void>((resolve, reject) => {
-          Papa.parse<ImportQuestionRow>(file, {
-            header: true,
-            skipEmptyLines: true,
-            complete: (results) => {
-              applyRows(results.data.filter((r) => r.Question));
-              resolve();
-            },
-            error: (error) => reject(error),
-          });
+      await new Promise<void>((resolve, reject) => {
+        Papa.parse<ImportQuestionRow>(file, {
+          header: true,
+          skipEmptyLines: true,
+          complete: (results) => {
+            if (results.errors.length) {
+              reject(new Error(results.errors[0]?.message));
+              return;
+            }
+            applyRows(results.data.filter((r) => r.Question));
+            resolve();
+          },
+          error: (error) => reject(error),
         });
-      } else if (ext === "xlsx" || ext === "xls") {
-        const buffer = await file.arrayBuffer();
-        const workbook = XLSX.read(buffer, { type: "array" });
-        const sheet = workbook.Sheets[workbook.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json<ImportQuestionRow>(sheet);
-        applyRows(json.filter((r) => r.Question));
-      } else {
-        toast.error("Chỉ hỗ trợ file .csv hoặc .xlsx");
-        setFileName("");
-      }
-    } catch {
-      toast.error("Không thể đọc file, vui lòng kiểm tra định dạng");
-      setFileName("");
-      setRows([]);
-    } finally {
-      setParsing(false);
-    }
-  }
-
-  async function handleDocx(file: File) {
-    setParsing(true);
-    setFileName(file.name);
-    try {
-      const buffer = await file.arrayBuffer();
-      const result = await mammoth.extractRawText({ arrayBuffer: buffer });
-      const factory = (correct: string) => {
-        const filled = explanationTemplate.replace(
-          /\{ANSWER\}/gi,
-          correct.toUpperCase()
-        );
-        return filled.trim() || defaultExplanation(correct);
-      };
-      const parsed = parseQuizTextToRows(result.value, {
-        explanationFactory: factory,
       });
-      if (!parsed.length) {
-        toast.error(
-          "Không tìm thấy câu hỏi hợp lệ. Kiểm tra định dạng Word (xem hướng dẫn mẫu)."
-        );
-        setRows([]);
-        return;
-      }
-      applyRows(parsed);
     } catch {
-      toast.error("Không thể đọc file Word (.docx)");
+      toast.error("Không thể đọc CSV, vui lòng kiểm tra đúng file mẫu");
       setFileName("");
       setRows([]);
     } finally {
@@ -284,7 +202,7 @@ function ImportDialog({
       <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="font-display text-xl text-teal-700">
-            Nhập câu hỏi từ file
+            Import câu hỏi
           </DialogTitle>
         </DialogHeader>
 
@@ -314,12 +232,11 @@ function ImportDialog({
             </Select>
           </div>
 
-          <div className="grid grid-cols-3 gap-1 rounded-2xl border border-teal-100 bg-teal-50/80 p-1">
+          <div className="grid grid-cols-2 gap-1 rounded-2xl border border-teal-100 bg-teal-50/80 p-1">
             {(
               [
-                { id: "file" as const, label: "CSV / Excel" },
-                { id: "docx" as const, label: "Word nhanh" },
-                { id: "chatgpt" as const, label: "ChatGPT" },
+                { id: "csv" as const, label: "Tải file CSV" },
+                { id: "chatgpt" as const, label: "Prompt ChatGPT" },
               ] as const
             ).map((tab) => (
               <button
@@ -346,20 +263,6 @@ function ImportDialog({
             >
               <Download className="size-3.5" /> CSV mẫu
             </button>
-            <button
-              type="button"
-              onClick={downloadXlsxTemplate}
-              className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-white px-3 py-1.5 font-semibold text-teal-700 transition hover:bg-teal-50"
-            >
-              <Download className="size-3.5" /> Excel mẫu
-            </button>
-            <a
-              href="/samples/docx-format-huong-dan.txt"
-              download
-              className="inline-flex items-center gap-1.5 rounded-full border border-teal-100 bg-white px-3 py-1.5 font-semibold text-teal-700 transition hover:bg-teal-50"
-            >
-              <FileType2 className="size-3.5" /> HD Word
-            </a>
             <a
               href="/samples/chatgpt-import-huong-dan.txt"
               download
@@ -369,7 +272,7 @@ function ImportDialog({
             </a>
           </div>
 
-          {mode === "file" ? (
+          {mode === "csv" ? (
             <>
               <button
                 type="button"
@@ -380,7 +283,7 @@ function ImportDialog({
                   <UploadCloud className="size-6" />
                 </span>
                 <span className="text-sm font-bold text-slate-700">
-                  {fileName || "Chọn file CSV hoặc XLSX"}
+                  {fileName || "Chọn file CSV"}
                 </span>
                 <span className="text-xs text-slate-500">
                   Cột: Question, A–D, Correct Answer, Explanation
@@ -389,60 +292,14 @@ function ImportDialog({
               <input
                 ref={fileInputRef}
                 type="file"
-                accept=".csv,.xlsx,.xls"
+                accept=".csv,text/csv"
                 className="hidden"
                 onChange={(e) => {
                   const file = e.target.files?.[0];
-                  if (file) void handleCsvOrExcel(file);
+                  if (file) void handleCsv(file);
                 }}
               />
             </>
-          ) : mode === "docx" ? (
-            <div className="space-y-3">
-              <div className="space-y-2">
-                <Label htmlFor="explanation-template">
-                  Explanation mặc định
-                </Label>
-                <Textarea
-                  id="explanation-template"
-                  className="min-h-16 rounded-xl border-teal-100"
-                  value={explanationTemplate}
-                  onChange={(e) => setExplanationTemplate(e.target.value)}
-                />
-                <p className="text-xs text-slate-500">
-                  Dùng{" "}
-                  <code className="rounded-md bg-teal-50 px-1.5 py-0.5 text-teal-700">
-                    {"{ANSWER}"}
-                  </code>{" "}
-                  để chèn đáp án đúng.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => docxInputRef.current?.click()}
-                className="flex w-full flex-col items-center gap-2 rounded-3xl border-2 border-dashed border-teal-200 bg-white px-4 py-8 text-center transition hover:border-teal-300 hover:bg-teal-50/50"
-              >
-                <span className="flex size-12 items-center justify-center rounded-2xl bg-teal-100 text-teal-600">
-                  <FileType2 className="size-6" />
-                </span>
-                <span className="text-sm font-bold text-slate-700">
-                  {fileName || "Chọn file Word (.docx)"}
-                </span>
-                <span className="text-xs text-slate-500">
-                  Tách câu hỏi + tạo Explanation đơn giản
-                </span>
-              </button>
-              <input
-                ref={docxInputRef}
-                type="file"
-                accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document"
-                className="hidden"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) void handleDocx(file);
-                }}
-              />
-            </div>
           ) : (
             <div className="space-y-4">
               <div className="rounded-2xl border border-teal-100 bg-teal-50/60 px-3.5 py-3">
@@ -454,7 +311,7 @@ function ImportDialog({
                     <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white">
                       1
                     </span>
-                    Dán đề / tải Word
+                    Dán nội dung đề
                   </span>
                   <span className="inline-flex items-center gap-1.5">
                     <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal-500 text-[10px] font-bold text-white">
@@ -472,42 +329,11 @@ function ImportDialog({
               </div>
 
               <div className="space-y-2">
-                <div className="flex flex-wrap items-center justify-between gap-2">
-                  <Label htmlFor="chatgpt-source">Nội dung đề</Label>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="sm"
-                    className="h-8 gap-1.5 rounded-xl border-teal-100 text-teal-700 hover:bg-teal-50"
-                    onClick={() => chatgptDocxRef.current?.click()}
-                  >
-                    <FileType2 className="size-3.5" /> Tải Word / TXT
-                  </Button>
-                  <input
-                    ref={chatgptDocxRef}
-                    type="file"
-                    accept=".docx,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.txt,text/plain"
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (!file) return;
-                      const ext = file.name.split(".").pop()?.toLowerCase();
-                      if (ext === "txt") {
-                        void file.text().then((t) => {
-                          setChatgptSource(t);
-                          setFileName(file.name);
-                          toast.success("Đã đọc file TXT");
-                        });
-                        return;
-                      }
-                      void loadChatgptDocx(file);
-                    }}
-                  />
-                </div>
+                <Label htmlFor="chatgpt-source">Nội dung đề</Label>
                 <Textarea
                   id="chatgpt-source"
                   className="min-h-24 rounded-xl border-teal-100 text-sm"
-                  placeholder="Dán đề thi / câu hỏi (A B C D + đáp án nếu có)..."
+                  placeholder="Dán đề hoặc nội dung cần ChatGPT chuyển thành câu hỏi..."
                   value={chatgptSource}
                   onChange={(e) => setChatgptSource(e.target.value)}
                 />
@@ -601,7 +427,7 @@ function ImportDialog({
                     downloadTextFile(
                       mode === "chatgpt"
                         ? "questions-from-chatgpt.csv"
-                        : "questions-from-docx.csv",
+                        : "questions-import.csv",
                       rowsToCsv(rows),
                       "text/csv;charset=utf-8"
                     )
@@ -739,7 +565,7 @@ export function QuestionsManager() {
               className="kid-btn gap-2"
             >
               <FileUp className="size-5" />
-              Nhập từ file
+              Import CSV / ChatGPT
             </Button>
             <Link
               href="/admin/questions/new"
