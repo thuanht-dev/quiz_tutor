@@ -18,7 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { EmptyState, PageHeader } from "@/components/shared/states";
 import { cn } from "@/lib/utils";
 import { formatDuration, relativeTime, scorePercent } from "@/lib/utils/format";
-import type { Attempt, Profile, StudentQuizCard } from "@/types/database";
+import type { Attempt, StudentQuizCard } from "@/types/database";
 
 function hexToRgba(hex: string, alpha: number) {
   const clean = hex.replace("#", "");
@@ -178,18 +178,18 @@ function RecentAttemptRow({ attempt, index }: { attempt: Attempt; index: number 
 }
 
 export function HomeView({
-  profile,
+  displayName,
   quizzes,
   recent,
 }: {
-  profile: Profile;
+  displayName: string;
   quizzes: StudentQuizCard[];
   recent: Attempt[];
 }) {
   return (
     <div className="space-y-8">
       <PageHeader
-        title={`Chào ${profile.display_name}! 👋`}
+        title={`Chào ${displayName}!`}
         description="Chọn một bài trắc nghiệm để bắt đầu luyện tập nhé!"
       />
 

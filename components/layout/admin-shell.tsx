@@ -9,7 +9,6 @@ import {
   LayoutDashboard,
   LogOut,
   Menu,
-  Users,
   GraduationCap,
 } from "lucide-react";
 import { useState } from "react";
@@ -24,8 +23,7 @@ const links = [
   { href: "/admin", label: "Dashboard", icon: LayoutDashboard },
   { href: "/admin/subjects", label: "Môn học", icon: BookOpen },
   { href: "/admin/quizzes", label: "Quiz", icon: ClipboardList },
-  { href: "/admin/questions", label: "Câu hỏi", icon: HelpCircle },
-  { href: "/admin/students", label: "Học sinh", icon: Users },
+  { href: "/admin/questions", label: "Ngân hàng", icon: HelpCircle },
   { href: "/admin/attempts", label: "Bài làm", icon: GraduationCap },
 ];
 

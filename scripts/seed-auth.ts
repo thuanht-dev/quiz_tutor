@@ -1,5 +1,5 @@
 /**
- * Bootstrap Auth users + profiles for Teddy Quiz.
+ * Bootstrap admin Auth user + profile for Teddy Quiz.
  * Usage: npx tsx scripts/seed-auth.ts
  *
  * Requires .env.local with:
@@ -51,24 +51,6 @@ const USERS = [
     display_name: "Cô Mai",
     role: "admin" as const,
     password: "admin123",
-  },
-  {
-    username: "minh",
-    display_name: "Nguyễn Minh",
-    role: "student" as const,
-    password: "minh123",
-  },
-  {
-    username: "lan",
-    display_name: "Trần Lan",
-    role: "student" as const,
-    password: "lan123",
-  },
-  {
-    username: "tuan",
-    display_name: "Lê Tuấn",
-    role: "student" as const,
-    password: "tuan123",
   },
 ];
 
@@ -127,7 +109,7 @@ async function checkSchema() {
   if (error) {
     console.error("\nSchema check failed:", error.message);
     console.error(
-      "→ Hãy chạy 2 file SQL trong supabase/migrations/ trên Supabase SQL Editor, rồi chạy supabase/seed.sql."
+      "→ Hãy chạy các file SQL trong supabase/migrations/ trên Supabase SQL Editor."
     );
     process.exit(1);
   }
@@ -137,11 +119,12 @@ async function checkSchema() {
 async function main() {
   console.log("Checking schema...");
   await checkSchema();
-  console.log("\nSeeding auth users + profiles...");
+  console.log("\nSeeding admin auth user + profile...");
   for (const user of USERS) {
     await ensureUser(user);
   }
-  console.log("\nDone. Login with admin/admin123 or minh/minh123");
+  console.log("\nDone. Admin login: admin / admin123");
+  console.log("Học sinh: mở trang chủ, nhập tên (không cần tài khoản).");
 }
 
 main().catch((err) => {

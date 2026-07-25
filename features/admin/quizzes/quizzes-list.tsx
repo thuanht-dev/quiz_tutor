@@ -66,7 +66,11 @@ export function QuizzesList() {
   });
 
   function handleDelete(id: string, title: string) {
-    if (window.confirm(`Xoá quiz "${title}"? Hành động này không thể hoàn tác.`)) {
+    if (
+      window.confirm(
+        `Xoá quiz "${title}"?\n\nMọi bài làm liên quan cũng sẽ bị xoá. Hành động này không thể hoàn tác.`
+      )
+    ) {
       deleteMutation.mutate(id);
     }
   }
@@ -75,7 +79,7 @@ export function QuizzesList() {
     <div>
       <PageHeader
         title="Quiz"
-        description="Quản lý các bài quiz cho học sinh"
+        description="Tạo quiz → thêm câu hỏi → xuất bản cho học sinh"
         actions={
           <Link
             href="/admin/quizzes/new"

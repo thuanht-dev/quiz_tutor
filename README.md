@@ -16,14 +16,12 @@ npm install
 npm run dev
 ```
 
-Mở [http://localhost:3000/login](http://localhost:3000/login)
+- **Học sinh:** mở [http://localhost:3000](http://localhost:3000) → nhập tên → làm quiz (tên lưu local).
+- **Giáo viên:** [http://localhost:3000/login](http://localhost:3000/login)
 
 | Vai trò | Username | Password |
 |---------|----------|----------|
 | Admin   | `admin`  | `admin123` |
-| Học sinh | `minh`  | `minh123` |
-| Học sinh | `lan`   | `lan123` |
-| Học sinh | `tuan`  | `tuan123` |
 
 ## Kết nối Supabase
 
@@ -39,6 +37,10 @@ SUPABASE_SERVICE_ROLE_KEY=...
 2. Chạy SQL (Supabase Dashboard → SQL Editor), theo thứ tự:
    - `supabase/migrations/20260324000001_init_schema.sql`
    - `supabase/migrations/20260324000002_rls_and_rpc.sql`
+   - `supabase/migrations/20260324000003_pass_and_retry.sql`
+   - `supabase/migrations/20260324000004_quiz_play_options.sql`
+   - `supabase/migrations/20260324000005_guest_attempts.sql`
+   - `supabase/migrations/20260324000006_admin_delete_cascade.sql`
    - `supabase/seed.sql` (môn / quiz / câu hỏi mẫu)
 
 3. Seed dữ liệu:
@@ -47,14 +49,12 @@ SUPABASE_SERVICE_ROLE_KEY=...
 npm run seed:all
 ```
 
-- `seed:auth` → users: `admin/admin123`, `minh/minh123`, …
+- `seed:auth` → admin `admin/admin123`
 - `seed:content` → môn / quiz / câu hỏi mẫu
 - `check:db` → đếm số dòng các bảng
 
-(Email nội bộ dạng `{username}@students.local`)
-
 4. Auth settings (Dashboard → Authentication → Providers → Email):
-   - Tắt **Confirm email** (script đã set `email_confirm: true`)
+   - Tắt **Confirm email**
 
 5. Restart app:
 
@@ -62,7 +62,10 @@ npm run seed:all
 npm run dev
 ```
 
-→ `/login` với `admin` / `admin123`
+## Mô hình người dùng
+
+- Chỉ **1 tài khoản admin** đăng nhập để soạn đề / xem bài làm.
+- **Học sinh không có tài khoản** — nhập tên trên trang chủ (localStorage: `guest_id` + tên). Mỗi bài làm lưu `guest_name` + `guest_id` trên attempt.
 
 ## Cấu trúc chính
 
@@ -70,25 +73,10 @@ npm run dev
 app/                 # routes (auth, admin, student)
 features/            # UI theo feature
 lib/repositories/    # data access (mock + Supabase)
-lib/auth/            # đăng nhập / session
+lib/auth/            # đăng nhập admin
 supabase/migrations/ # schema + RLS + RPC
-stores/              # Zustand quiz session
+stores/              # Zustand quiz + guest session
 ```
-
-## Tính năng mới: điểm đạt & làm lại câu sai
-
-- Mỗi quiz có **Điểm đạt (%)** (mặc định 85) — cấu hình trong form tạo/sửa quiz.
-- Sau khi nộp, hệ thống lưu attempt + từng câu trả lời; tutor xem tại `/admin/attempts`.
-- Kết quả hiện **ĐẠT / CHƯA ĐẠT** và nút **Làm lại các câu sai**.
-
-Sau khi pull code, chạy migration trên Supabase SQL Editor:
-
-`supabase/migrations/20260324000003_pass_and_retry.sql`
-
-
-CSV/Excel cột: `Question, A, B, C, D, Correct Answer, Explanation, Image URL`
-
-Xem mẫu: `public/samples/questions-import.csv`
 
 ## Scripts
 

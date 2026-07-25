@@ -6,7 +6,7 @@ import {
   ClipboardList,
   GraduationCap,
   HelpCircle,
-  Users,
+  Radio,
 } from "lucide-react";
 import { PageHeader, EmptyState, ErrorState } from "@/components/shared/states";
 import { StatCardsSkeleton, TableSkeleton } from "@/components/shared/skeletons";
@@ -23,41 +23,68 @@ import { getDashboardStats } from "@/lib/repositories";
 import { formatDuration, relativeTime, scorePercent } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 
-const STAT_CARDS = [
-  {
-    key: "student_count" as const,
-    label: "Học sinh",
-    icon: Users,
-    accent: "bg-teal-500",
-    bg: "bg-teal-50",
-  },
-  {
-    key: "quiz_count" as const,
-    label: "Quiz",
-    icon: ClipboardList,
-    accent: "bg-emerald-500",
-    bg: "bg-emerald-50",
-  },
-  {
-    key: "question_count" as const,
-    label: "Câu hỏi",
-    icon: HelpCircle,
-    accent: "bg-amber-500",
-    bg: "bg-amber-50",
-  },
-];
+function attemptName(attempt: {
+  guest_name?: string | null;
+  student?: { display_name?: string } | null;
+}) {
+  return attempt.guest_name || attempt.student?.display_name || "—";
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  submitted: "Đã nộp",
+  expired: "Hết giờ",
+  in_progress: "Đang làm",
+};
+
+const STATUS_CLASS: Record<string, string> = {
+  submitted: "bg-emerald-100 text-emerald-700",
+  expired: "bg-amber-100 text-amber-700",
+  in_progress: "bg-sky-100 text-sky-800",
+};
 
 export function DashboardView() {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: getDashboardStats,
+    refetchInterval: 15_000,
   });
+
+  const cards = [
+    {
+      key: "in_progress_count" as const,
+      label: "Đang làm",
+      icon: Radio,
+      accent: "bg-sky-500",
+      bg: "bg-sky-50",
+    },
+    {
+      key: "attempt_count" as const,
+      label: "Đã nộp / hết giờ",
+      icon: GraduationCap,
+      accent: "bg-teal-500",
+      bg: "bg-teal-50",
+    },
+    {
+      key: "quiz_count" as const,
+      label: "Quiz",
+      icon: ClipboardList,
+      accent: "bg-emerald-500",
+      bg: "bg-emerald-50",
+    },
+    {
+      key: "question_count" as const,
+      label: "Câu hỏi",
+      icon: HelpCircle,
+      accent: "bg-amber-500",
+      bg: "bg-amber-50",
+    },
+  ];
 
   return (
     <div>
       <PageHeader
         title="Bảng điều khiển"
-        description="Tổng quan hoạt động học tập của học sinh"
+        description="Theo dõi học sinh đang làm bài và kết quả gần đây"
       />
 
       {isLoading ? (
@@ -68,19 +95,23 @@ export function DashboardView() {
           onRetry={() => refetch()}
         />
       ) : (
-        <div className="grid gap-4 sm:grid-cols-3">
-          {STAT_CARDS.map(({ key, label, icon: Icon, accent, bg }) => (
-            <div
-              key={key}
-              className="kid-card flex items-center gap-4 p-5"
-            >
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {cards.map(({ key, label, icon: Icon, accent, bg }) => (
+            <div key={key} className="kid-card flex items-center gap-4 p-5">
               <div
                 className={cn(
                   "flex size-14 items-center justify-center rounded-2xl text-white shadow-md",
                   accent
                 )}
               >
-                <Icon className="size-7" />
+                <Icon
+                  className={cn(
+                    "size-7",
+                    key === "in_progress_count" &&
+                      (data?.in_progress_count ?? 0) > 0 &&
+                      "animate-pulse"
+                  )}
+                />
               </div>
               <div className={cn("flex-1 rounded-2xl px-3 py-2", bg)}>
                 <p className="text-2xl font-bold text-slate-800">
@@ -94,19 +125,30 @@ export function DashboardView() {
       )}
 
       <div className="mt-8">
-        <h2 className="mb-4 font-display text-xl font-bold text-slate-800">
-          Bài làm gần đây
-        </h2>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="font-display text-xl font-bold text-slate-800">
+            Hoạt động gần đây
+          </h2>
+          <Link
+            href="/admin/attempts"
+            className="text-sm font-bold text-teal-600 hover:underline"
+          >
+            Xem tất cả
+          </Link>
+        </div>
 
         {isLoading ? (
           <TableSkeleton />
         ) : isError ? (
-          <ErrorState description="Không thể tải danh sách bài làm" onRetry={() => refetch()} />
+          <ErrorState
+            description="Không thể tải danh sách bài làm"
+            onRetry={() => refetch()}
+          />
         ) : !data?.recent_attempts.length ? (
           <EmptyState
             icon={GraduationCap}
             title="Chưa có bài làm nào"
-            description="Bài làm của học sinh sẽ xuất hiện tại đây"
+            description="Khi học sinh bắt đầu hoặc nộp bài, sẽ hiện tại đây"
           />
         ) : (
           <div className="kid-card overflow-hidden p-2">
@@ -115,48 +157,58 @@ export function DashboardView() {
                 <TableRow>
                   <TableHead>Học sinh</TableHead>
                   <TableHead>Quiz</TableHead>
-                  <TableHead>Môn học</TableHead>
+                  <TableHead>Trạng thái</TableHead>
                   <TableHead>Điểm</TableHead>
-                  <TableHead>Thời gian làm</TableHead>
-                  <TableHead>Nộp bài</TableHead>
+                  <TableHead>Thời gian</TableHead>
+                  <TableHead>Thời điểm</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {data.recent_attempts.map((attempt) => (
-                  <TableRow key={attempt.id} className="cursor-default">
-                    <TableCell>
-                      <Link
-                        href={`/admin/attempts/${attempt.id}`}
-                        className="font-bold text-teal-700 hover:underline"
-                      >
-                        {attempt.student?.display_name ?? "—"}
-                      </Link>
-                    </TableCell>
-                    <TableCell>{attempt.quiz?.title ?? "—"}</TableCell>
-                    <TableCell>
-                      {attempt.quiz?.subject ? (
-                        <Badge
-                          className="text-white"
-                          style={{
-                            backgroundColor: attempt.quiz.subject.color,
-                          }}
+                {data.recent_attempts.map((attempt) => {
+                  const live = attempt.status === "in_progress";
+                  return (
+                    <TableRow
+                      key={attempt.id}
+                      className={cn(live && "bg-sky-50/70")}
+                    >
+                      <TableCell>
+                        <Link
+                          href={`/admin/attempts/${attempt.id}`}
+                          className="font-bold text-teal-700 hover:underline"
                         >
-                          {attempt.quiz.subject.name}
+                          {attemptName(attempt)}
+                        </Link>
+                      </TableCell>
+                      <TableCell>{attempt.quiz?.title ?? "—"}</TableCell>
+                      <TableCell>
+                        <Badge
+                          className={cn(
+                            "border-0",
+                            STATUS_CLASS[attempt.status],
+                            live && "animate-pulse"
+                          )}
+                        >
+                          {STATUS_LABELS[attempt.status] ?? attempt.status}
                         </Badge>
-                      ) : (
-                        "—"
-                      )}
-                    </TableCell>
-                    <TableCell className="font-bold text-slate-700">
-                      {attempt.score}/{attempt.max_score} (
-                      {scorePercent(attempt.score, attempt.max_score)}%)
-                    </TableCell>
-                    <TableCell>{formatDuration(attempt.duration_seconds)}</TableCell>
-                    <TableCell className="text-slate-500">
-                      {relativeTime(attempt.submitted_at)}
-                    </TableCell>
-                  </TableRow>
-                ))}
+                      </TableCell>
+                      <TableCell className="font-bold text-slate-700">
+                        {live
+                          ? "—"
+                          : `${attempt.score}/${attempt.max_score} (${scorePercent(attempt.score, attempt.max_score)}%)`}
+                      </TableCell>
+                      <TableCell>
+                        {live
+                          ? "—"
+                          : formatDuration(attempt.duration_seconds)}
+                      </TableCell>
+                      <TableCell className="text-slate-500">
+                        {live
+                          ? `Bắt đầu ${relativeTime(attempt.started_at)}`
+                          : relativeTime(attempt.submitted_at)}
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           </div>

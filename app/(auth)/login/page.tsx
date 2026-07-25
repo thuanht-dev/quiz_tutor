@@ -7,7 +7,7 @@ export const metadata = { title: "Đăng nhập" };
 export default async function LoginPage() {
   const profile = await getCurrentProfile();
   if (profile) {
-    redirect(profile.role === "admin" ? "/admin" : "/");
+    redirect("/admin");
   }
   return <LoginForm />;
 }

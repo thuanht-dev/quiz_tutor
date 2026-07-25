@@ -717,7 +717,11 @@ export function QuestionsManager() {
   });
 
   function handleDelete(id: string) {
-    if (window.confirm("Xoá câu hỏi này? Hành động này không thể hoàn tác.")) {
+    if (
+      window.confirm(
+        "Xoá câu hỏi này?\n\nCâu hỏi sẽ bị gỡ khỏi mọi quiz; đáp án trong bài làm cũ cũng bị xoá. Không thể hoàn tác."
+      )
+    ) {
       deleteMutation.mutate(id);
     }
   }
@@ -726,7 +730,7 @@ export function QuestionsManager() {
     <div>
       <PageHeader
         title="Ngân hàng câu hỏi"
-        description="Quản lý toàn bộ câu hỏi trắc nghiệm"
+        description="Nhập hàng loạt hoặc dùng lại câu hỏi giữa các quiz. Cách nhanh: thêm câu hỏi ngay trong trang quiz."
         actions={
           <>
             <Button

@@ -42,31 +42,47 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
         <>
           <PageHeader
             title={attempt.quiz?.title ?? "Bài làm"}
-            description={`Học sinh: ${attempt.student?.display_name ?? "—"}`}
+            description={`Học sinh: ${attempt.guest_name || attempt.student?.display_name || "—"}`}
           />
+
+          {attempt.status === "in_progress" ? (
+            <div className="mb-6 rounded-2xl border border-sky-200 bg-sky-50 px-4 py-3 text-sm text-sky-900">
+              Học sinh <strong>đang làm bài</strong> (bắt đầu{" "}
+              {relativeTime(attempt.started_at)}). Chưa có điểm — làm mới trang
+              để cập nhật khi nộp.
+            </div>
+          ) : null}
 
           <div className="mb-6 grid gap-4 sm:grid-cols-5">
             <div className="kid-card p-4 text-center">
               <p className="text-2xl font-bold text-teal-600">
-                {attempt.score}/{attempt.max_score}
+                {attempt.status === "in_progress"
+                  ? "—"
+                  : `${attempt.score}/${attempt.max_score}`}
               </p>
               <p className="text-sm text-slate-500">Điểm số</p>
             </div>
             <div className="kid-card p-4 text-center">
               <p className="text-2xl font-bold text-emerald-600">
-                {scorePercent(attempt.score, attempt.max_score)}%
+                {attempt.status === "in_progress"
+                  ? "—"
+                  : `${scorePercent(attempt.score, attempt.max_score)}%`}
               </p>
               <p className="text-sm text-slate-500">Tỉ lệ đúng</p>
             </div>
             <div className="kid-card p-4 text-center">
               <p className="text-2xl font-bold text-amber-600">
-                {attempt.correct_count}/{attempt.total_questions}
+                {attempt.status === "in_progress"
+                  ? "—"
+                  : `${attempt.correct_count}/${attempt.total_questions}`}
               </p>
               <p className="text-sm text-slate-500">Câu đúng</p>
             </div>
             <div className="kid-card p-4 text-center">
               <p className="text-2xl font-bold text-slate-700">
-                {formatDuration(attempt.duration_seconds)}
+                {attempt.status === "in_progress"
+                  ? "—"
+                  : formatDuration(attempt.duration_seconds)}
               </p>
               <p className="text-sm text-slate-500">Thời gian làm bài</p>
             </div>
@@ -74,19 +90,36 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
               <p
                 className={cn(
                   "text-2xl font-bold",
-                  attempt.passed ? "text-emerald-600" : "text-rose-600"
+                  attempt.status === "in_progress"
+                    ? "text-sky-600"
+                    : attempt.passed
+                      ? "text-emerald-600"
+                      : "text-rose-600"
                 )}
               >
-                {attempt.passed ? "ĐẠT" : "CHƯA"}
+                {attempt.status === "in_progress"
+                  ? "…"
+                  : attempt.passed
+                    ? "ĐẠT"
+                    : "CHƯA"}
               </p>
               <p className="text-sm text-slate-500">
-                Yêu cầu ≥ {attempt.quiz?.pass_percent ?? 85}%
+                {attempt.status === "in_progress"
+                  ? "Đang làm"
+                  : `Yêu cầu ≥ ${attempt.quiz?.pass_percent ?? 85}%`}
               </p>
             </div>
           </div>
 
           <div className="mb-6 flex flex-wrap items-center gap-3">
-            <Badge className="border-0 bg-teal-100 text-teal-700">
+            <Badge
+              className={cn(
+                "border-0",
+                attempt.status === "in_progress"
+                  ? "animate-pulse bg-sky-100 text-sky-800"
+                  : "bg-teal-100 text-teal-700"
+              )}
+            >
               {STATUS_LABELS[attempt.status] ?? attempt.status}
             </Badge>
             {attempt.is_retry_wrong ? (
@@ -94,18 +127,22 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
                 Làm lại câu sai
               </Badge>
             ) : null}
-            <Badge
-              className={cn(
-                "border-0",
-                attempt.passed
-                  ? "bg-emerald-100 text-emerald-700"
-                  : "bg-rose-100 text-rose-700"
-              )}
-            >
-              {attempt.passed ? "Đạt" : "Chưa đạt"}
-            </Badge>
+            {attempt.status !== "in_progress" ? (
+              <Badge
+                className={cn(
+                  "border-0",
+                  attempt.passed
+                    ? "bg-emerald-100 text-emerald-700"
+                    : "bg-rose-100 text-rose-700"
+                )}
+              >
+                {attempt.passed ? "Đạt" : "Chưa đạt"}
+              </Badge>
+            ) : null}
             <span className="text-sm text-slate-500">
-              Nộp bài {relativeTime(attempt.submitted_at)}
+              {attempt.status === "in_progress"
+                ? `Bắt đầu ${relativeTime(attempt.started_at)}`
+                : `Nộp bài ${relativeTime(attempt.submitted_at)}`}
             </span>
           </div>
 
@@ -113,6 +150,13 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
             Chi tiết từng câu hỏi
           </h2>
 
+          {!attempt.answers?.length ? (
+            <p className="rounded-2xl border border-dashed border-teal-200 bg-teal-50/50 px-4 py-8 text-center text-sm text-slate-500">
+              {attempt.status === "in_progress"
+                ? "Chưa có đáp án — học sinh vẫn đang làm bài."
+                : "Không có dữ liệu câu trả lời."}
+            </p>
+          ) : (
           <div className="space-y-4">
             {attempt.answers?.map((answer, index) => (
               <div key={answer.id} className="kid-card p-5">
@@ -173,6 +217,7 @@ export function AttemptDetail({ attemptId }: { attemptId: string }) {
               </div>
             ))}
           </div>
+          )}
         </>
       )}
     </div>

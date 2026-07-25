@@ -68,8 +68,11 @@ export function QuizForm({
       if (isEdit) queryClient.invalidateQueries({ queryKey: ["quiz", quiz!.id] });
       if (onSaved) {
         onSaved(result);
-      } else {
+      } else if (isEdit) {
         router.push("/admin/quizzes");
+      } else {
+        // Quiz-first: go straight to builder to add questions
+        router.push(`/admin/quizzes/${result.id}`);
       }
     },
     onError: (error: Error) =>
@@ -274,7 +277,7 @@ export function QuizForm({
           ) : (
             <>
               <Save className="size-4" />
-              {isEdit ? "Lưu thay đổi" : "Tạo quiz"}
+              {isEdit ? "Lưu thay đổi" : "Tạo & thêm câu hỏi"}
             </>
           )}
         </Button>

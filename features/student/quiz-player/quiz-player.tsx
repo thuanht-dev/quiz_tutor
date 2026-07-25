@@ -69,12 +69,14 @@ export function QuizPlayer({
   attemptId,
   timeLimit,
   isRetryWrong = false,
+  guestId,
 }: {
   quiz: Quiz;
   questions: Question[];
   attemptId: string;
   timeLimit: number | null;
   isRetryWrong?: boolean;
+  guestId: string;
 }) {
   const router = useRouter();
   const autoAdvance = quiz.auto_advance_on_answer ?? false;
@@ -131,7 +133,7 @@ export function QuizPlayer({
           question_id: question.id,
           selected_option_id: latestAnswers[question.id] ?? null,
         }));
-        const result = await submitAttempt(attemptId, payload, expired);
+        const result = await submitAttempt(attemptId, payload, expired, guestId);
         toast.success("Đã nộp bài!", { id: toastId });
         reset();
         router.push(`/attempts/${result.id}`);
@@ -144,7 +146,7 @@ export function QuizPlayer({
         setSubmitting(false);
       }
     },
-    [attemptId, questions, reset, router]
+    [attemptId, guestId, questions, reset, router]
   );
 
   useEffect(() => {
@@ -382,20 +384,23 @@ export function QuizPlayer({
                 ) : (
                   <>
                     <XCircle className="size-4" /> Chưa đúng
-                    {correctOption ? ` — đáp án đúng là ${correctOption.label}` : null}
                   </>
                 )}
               </p>
+              {!selectedIsCorrect && correctOption ? (
+                <p className="mt-2 rounded-xl bg-white/80 px-3 py-2 text-sm font-semibold text-emerald-800 ring-1 ring-emerald-200">
+                  Đáp án đúng:{" "}
+                  <span className="font-display">
+                    {correctOption.label}. {correctOption.content}
+                  </span>
+                </p>
+              ) : null}
               {question.explanation ? (
                 <p className="mt-2 flex gap-2 text-sm leading-relaxed text-slate-700">
                   <Lightbulb className="mt-0.5 size-4 shrink-0 text-amber-500" />
                   <span>{question.explanation}</span>
                 </p>
-              ) : (
-                <p className="mt-2 text-xs text-slate-500">
-                  Câu hỏi này chưa có phần giải thích.
-                </p>
-              )}
+              ) : null}
               {autoAdvance && !isLast ? (
                 <p className="mt-2 text-xs text-slate-500">
                   Tự chuyển câu tiếp theo sau giây lát…

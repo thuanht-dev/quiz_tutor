@@ -72,7 +72,9 @@ export interface QuizQuestion {
 export interface Attempt {
   id: string;
   quiz_id: string;
-  student_id: string;
+  student_id: string | null;
+  guest_name: string | null;
+  guest_id: string | null;
   started_at: string;
   submitted_at: string | null;
   score: number;
@@ -104,7 +106,8 @@ export interface AttemptAnswer {
 }
 
 export interface DashboardStats {
-  student_count: number;
+  attempt_count: number;
+  in_progress_count: number;
   quiz_count: number;
   question_count: number;
   recent_attempts: Attempt[];

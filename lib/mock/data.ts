@@ -10,10 +10,9 @@ import type {
 } from "@/types/database";
 
 export const MOCK_ADMIN_ID = "11111111-1111-1111-1111-111111111111";
-export const MOCK_STUDENT_IDS = {
-  minh: "22222222-2222-2222-2222-222222222221",
-  lan: "22222222-2222-2222-2222-222222222222",
-  tuan: "22222222-2222-2222-2222-222222222223",
+export const MOCK_GUEST_IDS = {
+  minh: "33333333-3333-3333-3333-333333333331",
+  lan: "33333333-3333-3333-3333-333333333332",
 } as const;
 
 export const mockProfiles: Profile[] = [
@@ -25,33 +24,6 @@ export const mockProfiles: Profile[] = [
     avatar_url: null,
     is_active: true,
     created_at: "2026-01-01T00:00:00Z",
-  },
-  {
-    id: MOCK_STUDENT_IDS.minh,
-    username: "minh",
-    display_name: "Nguyễn Minh",
-    role: "student",
-    avatar_url: null,
-    is_active: true,
-    created_at: "2026-01-02T00:00:00Z",
-  },
-  {
-    id: MOCK_STUDENT_IDS.lan,
-    username: "lan",
-    display_name: "Trần Lan",
-    role: "student",
-    avatar_url: null,
-    is_active: true,
-    created_at: "2026-01-03T00:00:00Z",
-  },
-  {
-    id: MOCK_STUDENT_IDS.tuan,
-    username: "tuan",
-    display_name: "Lê Tuấn",
-    role: "student",
-    avatar_url: null,
-    is_active: true,
-    created_at: "2026-01-04T00:00:00Z",
   },
 ];
 
@@ -247,7 +219,9 @@ export let mockAttempts: Attempt[] = [
   {
     id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee1",
     quiz_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1",
-    student_id: MOCK_STUDENT_IDS.minh,
+    student_id: null,
+    guest_name: "Nguyễn Minh",
+    guest_id: MOCK_GUEST_IDS.minh,
     started_at: "2026-03-20T08:00:00Z",
     submitted_at: "2026-03-20T08:08:00Z",
     score: 4,
@@ -264,7 +238,9 @@ export let mockAttempts: Attempt[] = [
   {
     id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee2",
     quiz_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb2",
-    student_id: MOCK_STUDENT_IDS.lan,
+    student_id: null,
+    guest_name: "Trần Lan",
+    guest_id: MOCK_GUEST_IDS.lan,
     started_at: "2026-03-21T09:00:00Z",
     submitted_at: "2026-03-21T09:05:00Z",
     score: 3,
@@ -278,15 +254,31 @@ export let mockAttempts: Attempt[] = [
     is_retry_wrong: false,
     created_at: "2026-03-21T09:00:00Z",
   },
+  {
+    id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee3",
+    quiz_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1",
+    student_id: null,
+    guest_name: "Lê Hùng",
+    guest_id: "gggggggg-gggg-gggg-gggg-ggggggggggg3",
+    started_at: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
+    submitted_at: null,
+    score: 0,
+    max_score: 0,
+    correct_count: 0,
+    total_questions: 0,
+    duration_seconds: null,
+    status: "in_progress",
+    passed: false,
+    parent_attempt_id: null,
+    is_retry_wrong: false,
+    created_at: new Date(Date.now() - 4 * 60 * 1000).toISOString(),
+  },
 ];
 
 export let mockAttemptAnswers: AttemptAnswer[] = [];
 
 export const mockPasswords: Record<string, string> = {
   admin: "admin123",
-  minh: "minh123",
-  lan: "lan123",
-  tuan: "tuan123",
 };
 
 export function getAllOptions(): Option[] {

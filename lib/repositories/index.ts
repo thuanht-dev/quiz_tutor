@@ -10,16 +10,13 @@ import {
   getQuizQuestionsDetailed,
   uid,
 } from "@/lib/repositories/mock-db";
-import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
-import { usernameToEmail } from "@/lib/constants";
 import type {
   Attempt,
   DashboardStats,
   ImportQuestionRow,
   Option,
   OptionLabel,
-  Profile,
   Question,
   Quiz,
   StudentQuizCard,
@@ -28,7 +25,6 @@ import type {
 import type {
   QuestionValues,
   QuizValues,
-  StudentValues,
   SubjectValues,
 } from "@/lib/validations/schemas";
 import { getCurrentProfile } from "@/lib/auth/actions";
@@ -43,44 +39,69 @@ function delay(ms = 120) {
 export async function getDashboardStats(): Promise<DashboardStats> {
   if (USE_MOCK) {
     await delay();
+    const completed = db.attempts.filter((a) => a.status !== "in_progress");
+    const inProgress = db.attempts.filter((a) => a.status === "in_progress");
     return {
-      student_count: db.profiles.filter((p) => p.role === "student").length,
+      attempt_count: completed.length,
+      in_progress_count: inProgress.length,
       quiz_count: db.quizzes.length,
       question_count: db.questions.length,
-      recent_attempts: db.attempts
-        .filter((a) => a.status !== "in_progress")
-        .sort(
-          (a, b) =>
+      recent_attempts: [...db.attempts]
+        .sort((a, b) => {
+          // In-progress first, then by latest activity
+          if (a.status === "in_progress" && b.status !== "in_progress") return -1;
+          if (b.status === "in_progress" && a.status !== "in_progress") return 1;
+          return (
             new Date(b.submitted_at ?? b.started_at).getTime() -
             new Date(a.submitted_at ?? a.started_at).getTime()
-        )
+          );
+        })
         .slice(0, 8)
         .map(enrichAttempt),
     };
   }
 
   const supabase = await createClient();
-  const [{ count: student_count }, { count: quiz_count }, { count: question_count }, recent] =
-    await Promise.all([
-      supabase
-        .from("profiles")
-        .select("*", { count: "exact", head: true })
-        .eq("role", "student"),
-      supabase.from("quizzes").select("*", { count: "exact", head: true }),
-      supabase.from("questions").select("*", { count: "exact", head: true }),
-      supabase
-        .from("attempts")
-        .select("*, quiz:quizzes(*, subject:subjects(*)), student:profiles(*)")
-        .neq("status", "in_progress")
-        .order("submitted_at", { ascending: false, nullsFirst: false })
-        .limit(8),
-    ]);
+  const [
+    { count: attempt_count },
+    { count: in_progress_count },
+    { count: quiz_count },
+    { count: question_count },
+    recent,
+  ] = await Promise.all([
+    supabase
+      .from("attempts")
+      .select("*", { count: "exact", head: true })
+      .neq("status", "in_progress"),
+    supabase
+      .from("attempts")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "in_progress"),
+    supabase.from("quizzes").select("*", { count: "exact", head: true }),
+    supabase.from("questions").select("*", { count: "exact", head: true }),
+    supabase
+      .from("attempts")
+      .select("*, quiz:quizzes(*, subject:subjects(*)), student:profiles(*)")
+      .order("started_at", { ascending: false })
+      .limit(12),
+  ]);
+
+  const recentRows = (recent.data ?? []) as Attempt[];
+  recentRows.sort((a, b) => {
+    if (a.status === "in_progress" && b.status !== "in_progress") return -1;
+    if (b.status === "in_progress" && a.status !== "in_progress") return 1;
+    return (
+      new Date(b.submitted_at ?? b.started_at).getTime() -
+      new Date(a.submitted_at ?? a.started_at).getTime()
+    );
+  });
 
   return {
-    student_count: student_count ?? 0,
+    attempt_count: attempt_count ?? 0,
+    in_progress_count: in_progress_count ?? 0,
     quiz_count: quiz_count ?? 0,
     question_count: question_count ?? 0,
-    recent_attempts: (recent.data ?? []) as Attempt[],
+    recent_attempts: recentRows.slice(0, 8),
   };
 }
 
@@ -289,13 +310,33 @@ export async function updateQuiz(id: string, values: QuizValues) {
 
 export async function deleteQuiz(id: string) {
   if (USE_MOCK) {
-    db.quizzes = db.quizzes.filter((q) => q.id !== id);
+    const attemptIds = db.attempts
+      .filter((a) => a.quiz_id === id)
+      .map((a) => a.id);
+    db.attemptAnswers = db.attemptAnswers.filter(
+      (a) => !attemptIds.includes(a.attempt_id)
+    );
+    db.attempts = db.attempts.filter((a) => a.quiz_id !== id);
     db.quizQuestions = db.quizQuestions.filter((qq) => qq.quiz_id !== id);
+    db.quizzes = db.quizzes.filter((q) => q.id !== id);
     return;
   }
   const supabase = await createClient();
-  const { error } = await supabase.from("quizzes").delete().eq("id", id);
-  if (error) throw error;
+  const { error } = await supabase.rpc("admin_delete_quiz", {
+    p_quiz_id: id,
+  });
+  if (error) {
+    if (
+      error.code === "23503" ||
+      error.code === "PGRST202" ||
+      /foreign key|violates|could not find the function/i.test(error.message)
+    ) {
+      throw new Error(
+        "Không xoá được quiz vì còn bài làm liên quan. Hãy chạy migration 20260324000006_admin_delete_cascade.sql trên Supabase rồi thử lại."
+      );
+    }
+    throw error;
+  }
 }
 
 export async function listQuizQuestions(quizId: string): Promise<Question[]> {
@@ -524,13 +565,40 @@ export async function updateQuestion(id: string, values: QuestionValues) {
 
 export async function deleteQuestion(id: string) {
   if (USE_MOCK) {
-    db.questions = db.questions.filter((q) => q.id !== id);
+    db.attemptAnswers = db.attemptAnswers.filter((a) => a.question_id !== id);
     db.quizQuestions = db.quizQuestions.filter((qq) => qq.question_id !== id);
+    db.questions = db.questions.filter((q) => q.id !== id);
     return;
   }
   const supabase = await createClient();
-  const { error } = await supabase.from("questions").delete().eq("id", id);
-  if (error) throw error;
+  const { error } = await supabase.rpc("admin_delete_question", {
+    p_question_id: id,
+  });
+  if (error) {
+    if (
+      error.code === "23503" ||
+      error.code === "PGRST202" ||
+      /foreign key|violates|could not find the function/i.test(error.message)
+    ) {
+      throw new Error(
+        "Không xoá được câu hỏi vì còn dữ liệu liên quan. Hãy chạy migration 20260324000006_admin_delete_cascade.sql trên Supabase rồi thử lại."
+      );
+    }
+    throw error;
+  }
+}
+
+/** Append questions to a quiz (keeps existing order, skips duplicates). */
+export async function addQuestionsToQuiz(
+  quizId: string,
+  questionIds: string[]
+) {
+  const current = await listQuizQuestions(quizId);
+  const ids = current.map((q) => q.id);
+  for (const id of questionIds) {
+    if (!ids.includes(id)) ids.push(id);
+  }
+  await setQuizQuestions(quizId, ids);
 }
 
 export async function copyQuestion(id: string) {
@@ -585,184 +653,69 @@ export async function importQuestions(
 }
 
 // ---------------------------------------------------------------------------
-// Students
-// ---------------------------------------------------------------------------
-export async function listStudents(): Promise<Profile[]> {
-  if (USE_MOCK) {
-    await delay();
-    return db.profiles
-      .filter((p) => p.role === "student")
-      .sort((a, b) => a.display_name.localeCompare(b.display_name));
-  }
-  const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .eq("role", "student")
-    .order("display_name");
-  if (error) throw error;
-  return data as Profile[];
-}
-
-export async function createStudent(values: StudentValues) {
-  if (!values.password) throw new Error("Cần mật khẩu khi tạo học sinh");
-
-  if (USE_MOCK) {
-    if (db.profiles.some((p) => p.username === values.username)) {
-      throw new Error("Username đã tồn tại");
-    }
-    const profile: Profile = {
-      id: uid(),
-      username: values.username,
-      display_name: values.display_name,
-      role: "student",
-      avatar_url: null,
-      is_active: values.is_active ?? true,
-      created_at: new Date().toISOString(),
-    };
-    db.profiles.push(profile);
-    db.passwords[values.username] = values.password;
-    return profile;
-  }
-
-  const admin = createAdminClient();
-  const email = usernameToEmail(values.username);
-  const { data: authData, error: authError } = await admin.auth.admin.createUser({
-    email,
-    password: values.password,
-    email_confirm: true,
-    user_metadata: {
-      username: values.username,
-      display_name: values.display_name,
-      role: "student",
-    },
-  });
-  if (authError) throw authError;
-
-  const { data, error } = await admin
-    .from("profiles")
-    .upsert({
-      id: authData.user.id,
-      username: values.username,
-      display_name: values.display_name,
-      role: "student",
-      is_active: values.is_active ?? true,
-    })
-    .select()
-    .single();
-  if (error) throw error;
-  return data as Profile;
-}
-
-export async function updateStudent(id: string, values: StudentValues) {
-  if (USE_MOCK) {
-    const idx = db.profiles.findIndex((p) => p.id === id);
-    if (idx < 0) throw new Error("Không tìm thấy học sinh");
-    const oldUsername = db.profiles[idx].username;
-    db.profiles[idx] = {
-      ...db.profiles[idx],
-      username: values.username,
-      display_name: values.display_name,
-      is_active: values.is_active ?? true,
-    };
-    if (values.password) {
-      delete db.passwords[oldUsername];
-      db.passwords[values.username] = values.password;
-    } else if (oldUsername !== values.username) {
-      db.passwords[values.username] = db.passwords[oldUsername];
-      delete db.passwords[oldUsername];
-    }
-    return db.profiles[idx];
-  }
-
-  const admin = createAdminClient();
-  const { data, error } = await admin
-    .from("profiles")
-    .update({
-      username: values.username,
-      display_name: values.display_name,
-      is_active: values.is_active ?? true,
-    })
-    .eq("id", id)
-    .select()
-    .single();
-  if (error) throw error;
-
-  if (values.password) {
-    const { error: pwError } = await admin.auth.admin.updateUserById(id, {
-      password: values.password,
-      email: usernameToEmail(values.username),
-    });
-    if (pwError) throw pwError;
-  }
-  return data as Profile;
-}
-
-export async function deleteStudent(id: string) {
-  if (USE_MOCK) {
-    const profile = db.profiles.find((p) => p.id === id);
-    if (profile) {
-      profile.is_active = false;
-    }
-    return;
-  }
-  const admin = createAdminClient();
-  const { error } = await admin
-    .from("profiles")
-    .update({ is_active: false })
-    .eq("id", id);
-  if (error) throw error;
-}
-
-export async function resetStudentPassword(id: string, password: string) {
-  if (USE_MOCK) {
-    const profile = db.profiles.find((p) => p.id === id);
-    if (!profile) throw new Error("Không tìm thấy học sinh");
-    db.passwords[profile.username] = password;
-    return;
-  }
-  const admin = createAdminClient();
-  const { error } = await admin.auth.admin.updateUserById(id, { password });
-  if (error) throw error;
-}
-
-// ---------------------------------------------------------------------------
 // Attempts
 // ---------------------------------------------------------------------------
 export async function listAttempts(filters?: {
-  student_id?: string;
+  guest_name?: string;
   quiz_id?: string;
+  status?: Attempt["status"] | "all";
 }): Promise<Attempt[]> {
+  const statusFilter = filters?.status ?? "all";
+
   if (USE_MOCK) {
     await delay();
+    const name = filters?.guest_name?.trim().toLowerCase();
     return db.attempts
-      .filter((a) => a.status !== "in_progress")
-      .filter((a) => !filters?.student_id || a.student_id === filters.student_id)
+      .filter((a) => statusFilter === "all" || a.status === statusFilter)
+      .filter(
+        (a) =>
+          !name ||
+          (a.guest_name ?? "").toLowerCase().includes(name)
+      )
       .filter((a) => !filters?.quiz_id || a.quiz_id === filters.quiz_id)
       .map(enrichAttempt)
-      .sort(
-        (a, b) =>
+      .sort((a, b) => {
+        if (a.status === "in_progress" && b.status !== "in_progress") return -1;
+        if (b.status === "in_progress" && a.status !== "in_progress") return 1;
+        return (
           new Date(b.submitted_at ?? b.started_at).getTime() -
           new Date(a.submitted_at ?? a.started_at).getTime()
-      );
+        );
+      });
   }
   const supabase = await createClient();
   let query = supabase
     .from("attempts")
     .select("*, quiz:quizzes(*, subject:subjects(*)), student:profiles(*)")
-    .neq("status", "in_progress")
-    .order("submitted_at", { ascending: false });
-  if (filters?.student_id) query = query.eq("student_id", filters.student_id);
+    .order("started_at", { ascending: false });
+  if (statusFilter !== "all") {
+    query = query.eq("status", statusFilter);
+  }
+  if (filters?.guest_name?.trim()) {
+    query = query.ilike("guest_name", `%${filters.guest_name.trim()}%`);
+  }
   if (filters?.quiz_id) query = query.eq("quiz_id", filters.quiz_id);
   const { data, error } = await query;
   if (error) throw error;
-  return data as Attempt[];
+  const rows = (data ?? []) as Attempt[];
+  return rows.sort((a, b) => {
+    if (a.status === "in_progress" && b.status !== "in_progress") return -1;
+    if (b.status === "in_progress" && a.status !== "in_progress") return 1;
+    return (
+      new Date(b.submitted_at ?? b.started_at).getTime() -
+      new Date(a.submitted_at ?? a.started_at).getTime()
+    );
+  });
 }
 
-export async function getAttempt(id: string): Promise<Attempt | null> {
+export async function getAttempt(
+  id: string,
+  guestId?: string | null
+): Promise<Attempt | null> {
   if (USE_MOCK) {
     const attempt = db.attempts.find((a) => a.id === id);
     if (!attempt) return null;
+    if (guestId && attempt.guest_id !== guestId) return null;
     const answers = db.attemptAnswers
       .filter((ans) => ans.attempt_id === id)
       .map((ans) => {
@@ -777,30 +730,85 @@ export async function getAttempt(id: string): Promise<Attempt | null> {
   }
 
   const supabase = await createClient();
-  const { data, error } = await supabase
-    .from("attempts")
-    .select(
-      "*, quiz:quizzes(*, subject:subjects(*)), student:profiles(*), answers:attempt_answers(*, question:questions(*, options(*)))"
-    )
-    .eq("id", id)
-    .maybeSingle();
-  if (error) throw error;
-  if (!data) return null;
+  const profile = await getCurrentProfile();
 
-  const answers = (data.answers ?? []).map(
-    (ans: {
-      question_id: string;
-      question?: Question & { options?: { is_correct: boolean }[] };
-    }) => ({
-      ...ans,
-      correct_option: ans.question?.options?.find((o) => o.is_correct),
-    })
+  if (profile?.role === "admin") {
+    const { data, error } = await supabase
+      .from("attempts")
+      .select(
+        "*, quiz:quizzes(*, subject:subjects(*)), student:profiles(*), answers:attempt_answers(*, question:questions(*, options(*)))"
+      )
+      .eq("id", id)
+      .maybeSingle();
+    if (error) throw error;
+    if (!data) return null;
+
+    const answers = (data.answers ?? []).map(
+      (ans: {
+        question_id: string;
+        question?: Question & { options?: { is_correct: boolean }[] };
+      }) => ({
+        ...ans,
+        correct_option: ans.question?.options?.find((o) => o.is_correct),
+      })
+    );
+
+    return { ...data, answers } as Attempt;
+  }
+
+  if (!guestId) return null;
+
+  const { data: attempt, error: attemptError } = await supabase.rpc(
+    "get_guest_attempt",
+    { p_attempt_id: id, p_guest_id: guestId }
+  );
+  if (attemptError) throw attemptError;
+  if (!attempt) return null;
+
+  const [{ data: answers }, { data: quiz }] = await Promise.all([
+    supabase.rpc("get_guest_attempt_answers", {
+      p_attempt_id: id,
+      p_guest_id: guestId,
+    }),
+    supabase
+      .from("quizzes")
+      .select("*, subject:subjects(*)")
+      .eq("id", (attempt as Attempt).quiz_id)
+      .maybeSingle(),
+  ]);
+
+  const questionIds = [
+    ...new Set(((answers as { question_id: string }[]) ?? []).map((a) => a.question_id)),
+  ];
+  const { data: questions } =
+    questionIds.length > 0
+      ? await supabase
+          .from("questions")
+          .select("*, options(*)")
+          .in("id", questionIds)
+      : { data: [] as Question[] };
+
+  const questionMap = new Map(
+    ((questions ?? []) as Question[]).map((q) => [q.id, q])
   );
 
-  return { ...data, answers } as Attempt;
+  const enrichedAnswers = ((answers as Attempt["answers"]) ?? []).map((ans) => {
+    const question = questionMap.get(ans.question_id);
+    return {
+      ...ans,
+      question,
+      correct_option: question?.options?.find((o) => o.is_correct),
+    };
+  });
+
+  return {
+    ...(attempt as Attempt),
+    quiz: quiz as Quiz | undefined,
+    answers: enrichedAnswers,
+  };
 }
 
-export async function listStudentHomeData(studentId: string) {
+export async function listStudentHomeData(guestId: string) {
   if (USE_MOCK) {
     await delay();
     const quizzes = db.quizzes
@@ -809,7 +817,7 @@ export async function listStudentHomeData(studentId: string) {
       .map((quiz) => {
         const attempts = db.attempts.filter(
           (a) =>
-            a.student_id === studentId &&
+            a.guest_id === guestId &&
             a.quiz_id === quiz.id &&
             a.status !== "in_progress" &&
             !a.is_retry_wrong
@@ -830,7 +838,7 @@ export async function listStudentHomeData(studentId: string) {
       });
 
     const recent = db.attempts
-      .filter((a) => a.student_id === studentId && a.status !== "in_progress")
+      .filter((a) => a.guest_id === guestId && a.status !== "in_progress")
       .map(enrichAttempt)
       .sort(
         (a, b) =>
@@ -849,20 +857,17 @@ export async function listStudentHomeData(studentId: string) {
       .select("*, subject:subjects(*), quiz_questions(count)")
       .eq("status", "published")
       .order("created_at", { ascending: false }),
-    supabase
-      .from("attempts")
-      .select("*, quiz:quizzes(*, subject:subjects(*))")
-      .eq("student_id", studentId)
-      .neq("status", "in_progress")
-      .order("submitted_at", { ascending: false }),
+    supabase.rpc("list_guest_attempts", { p_guest_id: guestId }),
   ]);
 
+  const attemptList = (attempts ?? []) as Attempt[];
+
   const cards: StudentQuizCard[] = (quizzes ?? []).map((quiz) => {
-    const mine = (attempts ?? []).filter(
+    const mine = attemptList.filter(
       (a) => a.quiz_id === quiz.id && !a.is_retry_wrong
     );
     const best = mine.reduce<Attempt | null>((acc, cur) => {
-      if (!acc || cur.score > acc.score) return cur as Attempt;
+      if (!acc || cur.score > acc.score) return cur;
       return acc;
     }, null);
     return {
@@ -876,19 +881,39 @@ export async function listStudentHomeData(studentId: string) {
     } as StudentQuizCard;
   });
 
+  const quizzesById = new Map(
+    (quizzes ?? []).map((q) => [
+      q.id,
+      {
+        ...q,
+        question_count: q.quiz_questions?.[0]?.count ?? 0,
+      } as Quiz,
+    ])
+  );
+
+  const recent = attemptList.slice(0, 5).map((a) => ({
+    ...a,
+    quiz: quizzesById.get(a.quiz_id),
+  }));
+
   return {
     quizzes: cards,
-    recent: (attempts ?? []).slice(0, 5) as Attempt[],
+    recent,
   };
 }
 
 export async function startAttempt(
   quizId: string,
-  parentAttemptId?: string | null
+  opts: {
+    guestName: string;
+    guestId: string;
+    parentAttemptId?: string | null;
+  }
 ): Promise<Attempt> {
-  const profile = await getCurrentProfile();
-  if (!profile || profile.role !== "student") {
-    throw new Error("Chỉ học sinh mới được làm bài");
+  const guestName = opts.guestName.trim();
+  const guestId = opts.guestId;
+  if (!guestName || !guestId) {
+    throw new Error("Cần nhập tên trước khi làm bài");
   }
 
   if (USE_MOCK) {
@@ -901,29 +926,31 @@ export async function startAttempt(
     let is_retry_wrong = false;
     let parent_attempt_id: string | null = null;
 
-    if (parentAttemptId) {
+    if (opts.parentAttemptId) {
       const parent = db.attempts.find(
         (a) =>
-          a.id === parentAttemptId &&
-          a.student_id === profile.id &&
+          a.id === opts.parentAttemptId &&
+          a.guest_id === guestId &&
           a.quiz_id === quizId &&
           a.status !== "in_progress"
       );
       if (!parent) throw new Error("Không tìm thấy bài làm gốc");
       const wrongIds = db.attemptAnswers
-        .filter((a) => a.attempt_id === parentAttemptId && !a.is_correct)
+        .filter((a) => a.attempt_id === opts.parentAttemptId && !a.is_correct)
         .map((a) => a.question_id);
       if (!wrongIds.length) throw new Error("Không còn câu sai để làm lại");
       questions = questions.filter((q) => wrongIds.includes(q.id));
       is_retry_wrong = true;
-      parent_attempt_id = parentAttemptId;
+      parent_attempt_id = opts.parentAttemptId;
     }
 
     if (!questions.length) throw new Error("Quiz chưa có câu hỏi");
     const attempt: Attempt = {
       id: uid(),
       quiz_id: quizId,
-      student_id: profile.id,
+      student_id: null,
+      guest_name: guestName,
+      guest_id: guestId,
       started_at: new Date().toISOString(),
       submitted_at: null,
       score: 0,
@@ -944,7 +971,9 @@ export async function startAttempt(
   const supabase = await createClient();
   const { data, error } = await supabase.rpc("start_attempt", {
     p_quiz_id: quizId,
-    p_parent_attempt_id: parentAttemptId ?? null,
+    p_guest_name: guestName,
+    p_guest_id: guestId,
+    p_parent_attempt_id: opts.parentAttemptId ?? null,
   });
   if (error) throw error;
   return data as Attempt;
@@ -953,12 +982,16 @@ export async function startAttempt(
 export async function submitAttempt(
   attemptId: string,
   answers: { question_id: string; selected_option_id: string | null }[],
-  expired = false
+  expired = false,
+  guestId?: string | null
 ): Promise<Attempt> {
   if (USE_MOCK) {
     const attempt = db.attempts.find((a) => a.id === attemptId);
     if (!attempt || attempt.status !== "in_progress") {
       throw new Error("Attempt không hợp lệ");
+    }
+    if (guestId && attempt.guest_id !== guestId) {
+      throw new Error("Không được nộp bài này");
     }
 
     db.attemptAnswers = db.attemptAnswers.filter(
@@ -1014,6 +1047,7 @@ export async function submitAttempt(
     p_attempt_id: attemptId,
     p_answers: answers,
     p_expired: expired,
+    p_guest_id: guestId ?? null,
   });
   if (error) throw error;
   return data as Attempt;
@@ -1021,7 +1055,8 @@ export async function submitAttempt(
 
 export async function getPlayQuiz(
   quizId: string,
-  parentAttemptId?: string | null
+  parentAttemptId?: string | null,
+  guestId?: string | null
 ) {
   const quiz = await getQuiz(quizId);
   if (!quiz || quiz.status !== "published") return null;
@@ -1029,7 +1064,7 @@ export async function getPlayQuiz(
   let questions = await listQuizQuestions(quizId);
 
   if (parentAttemptId) {
-    const parent = await getAttempt(parentAttemptId);
+    const parent = await getAttempt(parentAttemptId, guestId);
     if (!parent || parent.quiz_id !== quizId) return null;
     const wrongIds = new Set(
       (parent.answers ?? [])
@@ -1040,9 +1075,14 @@ export async function getPlayQuiz(
     if (!questions.length) return null;
   }
 
+  // Reveal mode needs is_correct client-side for immediate feedback.
+  // Otherwise strip it so network payloads don't leak the key during normal play.
+  const revealAnswers = quiz.show_explanation_on_answer ?? false;
   const safeQuestions = questions.map((q) => ({
     ...q,
-    options: q.options?.map(({ is_correct: _omit, ...rest }) => rest) ?? [],
+    options: revealAnswers
+      ? (q.options ?? [])
+      : (q.options?.map(({ is_correct: _omit, ...rest }) => rest) ?? []),
   }));
   return { quiz, questions: safeQuestions as Question[] };
 }

@@ -1,11 +1,9 @@
 import { StudentShell } from "@/components/layout/student-shell";
-import { requireProfile } from "@/lib/auth/actions";
 
-export default async function StudentLayout({
+export default function StudentLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const profile = await requireProfile("student");
-  return <StudentShell profile={profile}>{children}</StudentShell>;
+  return <StudentShell>{children}</StudentShell>;
 }

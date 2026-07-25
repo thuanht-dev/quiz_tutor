@@ -17,7 +17,10 @@ export default function NewQuizPage() {
           Quay lại danh sách quiz
         </Link>
       </div>
-      <PageHeader title="Tạo quiz mới" description="Điền thông tin để tạo quiz" />
+      <PageHeader
+        title="Tạo quiz mới"
+        description="Bước 1: thông tin quiz. Sau khi tạo bạn sẽ thêm câu hỏi ngay."
+      />
       <div className="max-w-2xl">
         <QuizForm />
       </div>

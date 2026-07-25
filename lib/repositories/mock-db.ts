@@ -62,7 +62,9 @@ export function enrichQuestion(question: Question): Question {
 
 export function enrichAttempt(attempt: Attempt): Attempt {
   const quiz = db.quizzes.find((q) => q.id === attempt.quiz_id);
-  const student = db.profiles.find((p) => p.id === attempt.student_id);
+  const student = attempt.student_id
+    ? db.profiles.find((p) => p.id === attempt.student_id)
+    : undefined;
   return {
     ...attempt,
     quiz: quiz ? enrichQuiz(quiz) : undefined,

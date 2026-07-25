@@ -14,7 +14,9 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     const cookieStore = await cookies();
     const userId = cookieStore.get(MOCK_SESSION_COOKIE)?.value;
     if (!userId) return null;
-    return db.profiles.find((p) => p.id === userId && p.is_active) ?? null;
+    const profile = db.profiles.find((p) => p.id === userId && p.is_active) ?? null;
+    if (profile && profile.role !== "admin") return null;
+    return profile;
   }
 
   const supabase = await createClient();
@@ -29,14 +31,15 @@ export async function getCurrentProfile(): Promise<Profile | null> {
     .eq("id", user.id)
     .single();
 
-  return data as Profile | null;
+  if (!data || data.role !== "admin") return null;
+  return data as Profile;
 }
 
-export async function requireProfile(role?: "admin" | "student") {
+export async function requireProfile(role: "admin" = "admin") {
   const profile = await getCurrentProfile();
   if (!profile) redirect("/login");
   if (role && profile.role !== role) {
-    redirect(profile.role === "admin" ? "/admin" : "/");
+    redirect("/login");
   }
   return profile;
 }
@@ -45,7 +48,9 @@ export async function signInAction(username: string, password: string) {
   const normalized = username.toLowerCase().trim();
 
   if (USE_MOCK) {
-    const profile = db.profiles.find((p) => p.username === normalized && p.is_active);
+    const profile = db.profiles.find(
+      (p) => p.username === normalized && p.is_active && p.role === "admin"
+    );
     if (!profile || db.passwords[normalized] !== password) {
       return { error: "Sai tên đăng nhập hoặc mật khẩu" };
     }
@@ -55,10 +60,7 @@ export async function signInAction(username: string, password: string) {
       sameSite: "lax",
       path: "/",
     });
-    return {
-      ok: true as const,
-      role: profile.role,
-    };
+    return { ok: true as const, role: "admin" as const };
   }
 
   const supabase = await createClient();
@@ -67,25 +69,21 @@ export async function signInAction(username: string, password: string) {
     { p_username: normalized }
   );
 
-  if (lookupError || !email) {
-    // Fallback: construct student email domain
-    const fallbackEmail = usernameToEmail(normalized);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: fallbackEmail,
-      password,
-    });
-    if (error) return { error: "Sai tên đăng nhập hoặc mật khẩu" };
-  } else {
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email as string,
-      password,
-    });
-    if (error) return { error: "Sai tên đăng nhập hoặc mật khẩu" };
-  }
+  const loginEmail =
+    !lookupError && email ? (email as string) : usernameToEmail(normalized);
+
+  const { error } = await supabase.auth.signInWithPassword({
+    email: loginEmail,
+    password,
+  });
+  if (error) return { error: "Sai tên đăng nhập hoặc mật khẩu" };
 
   const profile = await getCurrentProfile();
-  if (!profile) return { error: "Không tìm thấy hồ sơ người dùng" };
-  return { ok: true as const, role: profile.role };
+  if (!profile || profile.role !== "admin") {
+    await supabase.auth.signOut();
+    return { error: "Tài khoản này không phải quản trị viên" };
+  }
+  return { ok: true as const, role: "admin" as const };
 }
 
 export async function signOutAction() {

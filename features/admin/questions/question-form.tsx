@@ -33,9 +33,17 @@ const OPTION_FIELD_MAP = {
 export function QuestionForm({
   question,
   onSaved,
+  defaultSubjectId,
+  lockSubject = false,
+  submitLabel,
+  className,
 }: {
   question?: Question;
   onSaved?: (question: Question | null) => void;
+  defaultSubjectId?: string;
+  lockSubject?: boolean;
+  submitLabel?: string;
+  className?: string;
 }) {
   const router = useRouter();
   const queryClient = useQueryClient();
@@ -44,6 +52,7 @@ export function QuestionForm({
   const { data: subjects } = useQuery({
     queryKey: ["subjects"],
     queryFn: () => listSubjects(),
+    enabled: !lockSubject,
   });
 
   const optionsByLabel = Object.fromEntries(
@@ -55,7 +64,8 @@ export function QuestionForm({
   const form = useForm<QuestionValues>({
     resolver: zodResolver(questionSchema),
     values: {
-      subject_id: question?.subject_id ?? "",
+      subject_id:
+        question?.subject_id ?? defaultSubjectId ?? "",
       content: question?.content ?? "",
       image_url: question?.image_url ?? "",
       explanation: question?.explanation ?? "",
@@ -93,44 +103,48 @@ export function QuestionForm({
   return (
     <form
       onSubmit={form.handleSubmit((values) => mutation.mutate(values))}
-      className="kid-card space-y-5 p-6"
+      className={cn("kid-card space-y-5 p-6", className)}
     >
       <div className="grid gap-4 sm:grid-cols-2">
-        <div className="space-y-2">
-          <Label>Môn học</Label>
-          <Controller
-            control={form.control}
-            name="subject_id"
-            render={({ field }) => (
-              <Select
-                value={field.value}
-                onValueChange={(v) => field.onChange(v ?? "")}
-                items={
-                  subjects?.map((subject) => ({
-                    value: subject.id,
-                    label: subject.name,
-                  })) ?? []
-                }
-              >
-                <SelectTrigger className="h-11 w-full rounded-xl">
-                  <SelectValue placeholder="Chọn môn học" />
-                </SelectTrigger>
-                <SelectContent>
-                  {subjects?.map((subject) => (
-                    <SelectItem key={subject.id} value={subject.id}>
-                      {subject.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            )}
-          />
-          {form.formState.errors.subject_id ? (
-            <p className="text-sm text-rose-500">
-              {form.formState.errors.subject_id.message}
-            </p>
-          ) : null}
-        </div>
+        {!lockSubject ? (
+          <div className="space-y-2">
+            <Label>Môn học</Label>
+            <Controller
+              control={form.control}
+              name="subject_id"
+              render={({ field }) => (
+                <Select
+                  value={field.value}
+                  onValueChange={(v) => field.onChange(v ?? "")}
+                  items={
+                    subjects?.map((subject) => ({
+                      value: subject.id,
+                      label: subject.name,
+                    })) ?? []
+                  }
+                >
+                  <SelectTrigger className="h-11 w-full rounded-xl">
+                    <SelectValue placeholder="Chọn môn học" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {subjects?.map((subject) => (
+                      <SelectItem key={subject.id} value={subject.id}>
+                        {subject.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            />
+            {form.formState.errors.subject_id ? (
+              <p className="text-sm text-rose-500">
+                {form.formState.errors.subject_id.message}
+              </p>
+            ) : null}
+          </div>
+        ) : (
+          <input type="hidden" {...form.register("subject_id")} />
+        )}
 
         <div className="space-y-2">
           <Label htmlFor="question-points">Điểm</Label>
@@ -237,7 +251,7 @@ export function QuestionForm({
           ) : (
             <>
               <Save className="size-4" />
-              {isEdit ? "Lưu thay đổi" : "Tạo câu hỏi"}
+              {submitLabel ?? (isEdit ? "Lưu thay đổi" : "Tạo câu hỏi")}
             </>
           )}
         </Button>

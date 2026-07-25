@@ -35,7 +35,7 @@ export function LoginForm() {
       toast.success("Đăng nhập thành công! Đang chuyển trang...", {
         id: toastId,
       });
-      router.replace(result.role === "admin" ? "/admin" : "/");
+      router.replace("/admin");
       router.refresh();
       // Keep loading until navigation; don't clear in finally on success
     } catch {
@@ -60,7 +60,7 @@ export function LoginForm() {
             <div>
               <p className="font-display text-4xl font-bold">{APP_NAME}</p>
               <p className="mt-3 max-w-xs text-lg text-white/90">
-                Quiz rõ ràng, chấm điểm nhanh — dành cho gia sư và học sinh.
+                Đăng nhập quản trị để soạn quiz và xem bài làm học sinh.
               </p>
             </div>
           </div>
@@ -73,10 +73,10 @@ export function LoginForm() {
             </p>
           </div>
           <h1 className="font-display text-2xl font-bold text-slate-900">
-            Đăng nhập
+            Đăng nhập giáo viên
           </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Nhập tên đăng nhập và mật khẩu để bắt đầu
+            Học sinh không cần đăng nhập — mở trang chủ và nhập tên để làm bài.
           </p>
 
           <form onSubmit={form.handleSubmit(onSubmit)} className="mt-8 space-y-5">
@@ -119,7 +119,7 @@ export function LoginForm() {
                   <Loader2 className="animate-spin" /> Đang đăng nhập...
                 </>
               ) : (
-                "Vào học thôi!"
+                "Vào quản trị"
               )}
             </Button>
           </form>
@@ -128,7 +128,6 @@ export function LoginForm() {
             <div className="mt-6 rounded-2xl bg-amber-50 p-4 text-sm text-amber-900">
               <p className="font-bold">Tài khoản demo (mock)</p>
               <p className="mt-1">Admin: admin / admin123</p>
-              <p>Học sinh: minh / minh123</p>
             </div>
           ) : null}
         </div>
