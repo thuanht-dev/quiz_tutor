@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
 import {
   CheckCircle2,
@@ -10,6 +10,7 @@ import {
   Sparkles,
   Target,
   Trophy,
+  Volume2,
   XCircle,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -17,42 +18,96 @@ import { buttonVariants } from "@/components/ui/button";
 import { PendingLink } from "@/components/shared/pending-link";
 import { cn } from "@/lib/utils";
 import { formatDuration, scorePercent } from "@/lib/utils/format";
+import { playEncourageTone, playPassFanfare } from "@/lib/utils/sounds";
+import { useQuizSession } from "@/stores/quiz-session";
 import type { Attempt, AttemptAnswer } from "@/types/database";
 
-const CONFETTI_COLORS = ["#0EA5E9", "#22C55E", "#F97316", "#EAB308", "#EC4899", "#6366F1"];
+const CONFETTI_COLORS = [
+  "#14B8A6",
+  "#22C55E",
+  "#F97316",
+  "#EAB308",
+  "#EC4899",
+  "#0EA5E9",
+  "#F43F5E",
+  "#A855F7",
+];
 
-function Confetti({ count }: { count: number }) {
-  const pieces = useMemo(
-    () =>
-      Array.from({ length: count }).map((_, i) => ({
+function ConfettiBurst({ active, big }: { active: boolean; big: boolean }) {
+  const pieces = useMemo(() => {
+    if (!active) return [];
+    const count = big ? 72 : 20;
+    return Array.from({ length: count }).map((_, i) => {
+      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
+      const distance = big ? 120 + Math.random() * 220 : 60 + Math.random() * 100;
+      return {
         id: i,
-        left: Math.random() * 100,
-        delay: Math.random() * 0.5,
-        duration: 1.6 + Math.random() * 1.2,
+        x: Math.cos(angle) * distance,
+        y: Math.sin(angle) * distance + (big ? 40 : 20),
+        delay: Math.random() * 0.35,
+        duration: 1.4 + Math.random() * 1.4,
         color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-        rotate: 180 + Math.random() * 360,
-        width: 5 + Math.random() * 5,
-      })),
-    [count]
-  );
+        rotate: 200 + Math.random() * 520,
+        width: 6 + Math.random() * 7,
+        round: Math.random() > 0.55,
+      };
+    });
+  }, [active, big]);
+
+  if (!active) return null;
 
   return (
     <div className="pointer-events-none absolute inset-0 overflow-hidden">
       {pieces.map((p) => (
         <motion.span
           key={p.id}
-          className="absolute top-0 rounded-sm"
+          className={cn("absolute left-1/2 top-1/3", p.round ? "rounded-full" : "rounded-sm")}
           style={{
-            left: `${p.left}%`,
             width: p.width,
-            height: p.width * 0.45,
+            height: p.round ? p.width : p.width * 0.4,
             backgroundColor: p.color,
+            boxShadow: `0 0 0 1px ${p.color}33`,
           }}
-          initial={{ y: -20, opacity: 0, rotate: 0 }}
-          animate={{ y: 340, opacity: [0, 1, 1, 0], rotate: p.rotate }}
-          transition={{ duration: p.duration, delay: p.delay, ease: "easeIn" }}
+          initial={{ x: 0, y: 0, opacity: 0, scale: 0.4, rotate: 0 }}
+          animate={{
+            x: p.x,
+            y: p.y + (big ? 180 : 80),
+            opacity: [0, 1, 1, 0],
+            scale: [0.4, 1.1, 1, 0.8],
+            rotate: p.rotate,
+          }}
+          transition={{
+            duration: p.duration,
+            delay: p.delay,
+            ease: "easeOut",
+          }}
         />
       ))}
+      {big
+        ? Array.from({ length: 36 }).map((_, i) => (
+            <motion.span
+              key={`fall-${i}`}
+              className="absolute top-0 rounded-sm"
+              style={{
+                left: `${(i * 37) % 100}%`,
+                width: 5 + (i % 5),
+                height: 3 + (i % 3),
+                backgroundColor: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+              }}
+              initial={{ y: -24, opacity: 0, rotate: 0 }}
+              animate={{
+                y: 420,
+                opacity: [0, 1, 1, 0],
+                rotate: 180 + i * 40,
+              }}
+              transition={{
+                duration: 2 + (i % 5) * 0.25,
+                delay: 0.15 + (i % 8) * 0.08,
+                ease: "easeIn",
+              }}
+            />
+          ))
+        : null}
     </div>
   );
 }
@@ -75,7 +130,9 @@ function ReviewItem({ index, answer }: { index: number; answer: AttemptAnswer })
         <Badge
           className={cn(
             "shrink-0 gap-1",
-            answer.is_correct ? "bg-emerald-100 text-emerald-700" : "bg-rose-100 text-rose-700"
+            answer.is_correct
+              ? "bg-emerald-100 text-emerald-700"
+              : "bg-rose-100 text-rose-700"
           )}
         >
           {answer.is_correct ? (
@@ -147,19 +204,52 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
   const passed = attempt.passed ?? percent >= passPercent;
   const wrongAnswers = (attempt.answers ?? []).filter((a) => !a.is_correct);
   const ringColor = passed ? "#22C55E" : percent >= 50 ? "#F59E0B" : "#F43F5E";
+  const soundEnabled = useQuizSession((s) => s.soundEnabled);
+  const celebratedRef = useRef(false);
+
   const message = passed
-    ? "Đạt rồi! Giỏi quá! 🎉"
+    ? "Đạt rồi! Giỏi quá!"
     : attempt.is_retry_wrong
-      ? "Chưa đạt, luyện thêm các câu sai nhé! 💪"
-      : "Chưa đạt yêu cầu, làm lại các câu sai nhé! 🌱";
+      ? "Chưa đạt, luyện thêm các câu sai nhé!"
+      : "Chưa đạt yêu cầu, làm lại các câu sai nhé!";
+
+  useEffect(() => {
+    if (celebratedRef.current) return;
+    celebratedRef.current = true;
+    if (!soundEnabled) return;
+    if (passed) playPassFanfare();
+    else playEncourageTone();
+  }, [passed, soundEnabled]);
 
   return (
     <div className="mx-auto max-w-2xl space-y-8 pb-10">
       <div className="relative overflow-hidden rounded-3xl">
-        <Confetti count={passed ? 46 : 18} />
-        <div className="kid-card relative space-y-6 p-6 text-center sm:p-8">
+        <ConfettiBurst active big={passed} />
+        <div
+          className={cn(
+            "kid-card relative space-y-6 p-6 text-center sm:p-8",
+            passed && "ring-2 ring-emerald-300/80"
+          )}
+        >
+          {passed ? (
+            <motion.div
+              initial={{ scale: 0, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              transition={{ type: "spring", stiffness: 220, damping: 12 }}
+              className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-500 text-white shadow-lg shadow-emerald-200"
+            >
+              <Sparkles className="size-7" />
+            </motion.div>
+          ) : null}
+
           <div>
-            <p className="font-display text-2xl font-bold text-slate-800">{message}</p>
+            <motion.p
+              initial={{ y: 8, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              className="font-display text-2xl font-bold text-slate-800 sm:text-3xl"
+            >
+              {message}
+            </motion.p>
             <p className="mt-1 text-sm text-slate-500">{attempt.quiz?.title}</p>
             {attempt.is_retry_wrong ? (
               <Badge className="mt-2 border-0 bg-amber-100 text-amber-800">
@@ -187,6 +277,20 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
               background: `conic-gradient(${ringColor} ${percent * 3.6}deg, #e0f2fe ${percent * 3.6}deg)`,
             }}
           >
+            {passed ? (
+              <motion.div
+                className="pointer-events-none absolute inset-0 rounded-full"
+                initial={{ boxShadow: "0 0 0 0 rgba(34,197,94,0.45)" }}
+                animate={{
+                  boxShadow: [
+                    "0 0 0 0 rgba(34,197,94,0.45)",
+                    "0 0 0 18px rgba(34,197,94,0)",
+                    "0 0 0 0 rgba(34,197,94,0)",
+                  ],
+                }}
+                transition={{ duration: 1.6, repeat: 2 }}
+              />
+            ) : null}
             <div className="flex size-32 flex-col items-center justify-center rounded-full bg-white shadow-inner">
               <Trophy className="size-6" style={{ color: ringColor }} />
               <span className="font-display text-3xl font-bold text-slate-800">
@@ -197,6 +301,15 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
               </span>
             </div>
           </motion.div>
+
+          {passed ? (
+            <p className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+              <Volume2 className="size-4" />
+              {soundEnabled
+                ? "Chúc mừng đạt rồi!"
+                : "Bật loa trên thanh trên để nghe nhạc chúc mừng lần sau"}
+            </p>
+          ) : null}
 
           <div className="grid grid-cols-3 gap-3">
             <div className="rounded-2xl bg-emerald-50 p-3">
@@ -223,7 +336,10 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
           <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
             <PendingLink
               href="/"
-              className={cn(buttonVariants({ variant: "outline", size: "lg" }), "kid-btn gap-2")}
+              className={cn(
+                buttonVariants({ variant: "outline", size: "lg" }),
+                "kid-btn gap-2"
+              )}
             >
               <Home className="size-4" /> Về trang chủ
             </PendingLink>

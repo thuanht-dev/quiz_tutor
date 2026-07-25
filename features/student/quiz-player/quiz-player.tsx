@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState, type RefObject } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatePresence, motion } from "framer-motion";
 import {
@@ -29,6 +29,7 @@ import {
 import { submitAttempt } from "@/lib/repositories";
 import { cn } from "@/lib/utils";
 import { formatTimer } from "@/lib/utils/format";
+import { playSelectBeep } from "@/lib/utils/sounds";
 import { useQuizSession } from "@/stores/quiz-session";
 import type { OptionLabel, Question, Quiz } from "@/types/database";
 
@@ -38,30 +39,6 @@ const OPTION_STYLES: Record<OptionLabel, { bg: string; text: string }> = {
   C: { bg: "bg-amber-600", text: "text-white" },
   D: { bg: "bg-slate-600", text: "text-white" },
 };
-
-function playSelectBeep(ctxRef: RefObject<AudioContext | null>) {
-  try {
-    const AudioCtor =
-      window.AudioContext ??
-      (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    if (!AudioCtor) return;
-    if (!ctxRef.current) ctxRef.current = new AudioCtor();
-    const ctx = ctxRef.current;
-    const oscillator = ctx.createOscillator();
-    const gain = ctx.createGain();
-    oscillator.type = "sine";
-    oscillator.frequency.value = 720;
-    gain.gain.setValueAtTime(0.0001, ctx.currentTime);
-    gain.gain.exponentialRampToValueAtTime(0.18, ctx.currentTime + 0.01);
-    gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + 0.16);
-    oscillator.connect(gain);
-    gain.connect(ctx.destination);
-    oscillator.start();
-    oscillator.stop(ctx.currentTime + 0.18);
-  } catch {
-    // Web Audio not supported: fail silently, sound is a nice-to-have.
-  }
-}
 
 export function QuizPlayer({
   quiz,
