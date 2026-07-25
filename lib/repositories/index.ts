@@ -703,6 +703,28 @@ export async function listAttempts(filters?: {
   return dedupeAttemptsForAdmin((data ?? []) as Attempt[]);
 }
 
+export async function deleteAttempt(id: string) {
+  if (USE_MOCK) {
+    db.attemptAnswers = db.attemptAnswers.filter((a) => a.attempt_id !== id);
+    db.attempts = db.attempts.filter((a) => a.id !== id);
+    // Clear parent links from retries that pointed here
+    for (const a of db.attempts) {
+      if (a.parent_attempt_id === id) a.parent_attempt_id = null;
+    }
+    return;
+  }
+  const supabase = await createClient();
+  const { error } = await supabase.from("attempts").delete().eq("id", id);
+  if (error) {
+    if (error.code === "42501" || /policy|permission/i.test(error.message)) {
+      throw new Error(
+        "Không có quyền xoá bài làm. Hãy chạy migration 20260324000006_admin_delete_cascade.sql trên Supabase."
+      );
+    }
+    throw error;
+  }
+}
+
 export async function getAttempt(
   id: string,
   guestId?: string | null

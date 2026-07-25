@@ -1,16 +1,20 @@
 ﻿"use client";
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   ClipboardList,
   GraduationCap,
   HelpCircle,
+  Loader2,
   Radio,
+  Trash2,
 } from "lucide-react";
+import { toast } from "sonner";
 import { PageHeader, EmptyState, ErrorState } from "@/components/shared/states";
 import { StatCardsSkeleton, TableSkeleton } from "@/components/shared/skeletons";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -19,7 +23,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { getDashboardStats } from "@/lib/repositories";
+import { deleteAttempt, getDashboardStats } from "@/lib/repositories";
 import { formatDuration, relativeTime, scorePercent } from "@/lib/utils/format";
 import { cn } from "@/lib/utils";
 
@@ -43,11 +47,35 @@ const STATUS_CLASS: Record<string, string> = {
 };
 
 export function DashboardView() {
+  const queryClient = useQueryClient();
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: getDashboardStats,
     refetchInterval: 15_000,
   });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteAttempt(id),
+    onMutate: () => toast.loading("Đang xoá bản ghi...", { id: "delete-attempt" }),
+    onSuccess: () => {
+      toast.success("Đã xoá bản ghi", { id: "delete-attempt" });
+      queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
+      queryClient.invalidateQueries({ queryKey: ["attempts"] });
+      queryClient.invalidateQueries({ queryKey: ["attempts-summary"] });
+    },
+    onError: (error: Error) =>
+      toast.error(error.message || "Không thể xoá", { id: "delete-attempt" }),
+  });
+
+  function handleDelete(id: string, name: string) {
+    if (
+      window.confirm(
+        `Xoá bản ghi của "${name}"?\n\nHành động này không thể hoàn tác.`
+      )
+    ) {
+      deleteMutation.mutate(id);
+    }
+  }
 
   const cards = [
     {
@@ -161,11 +189,13 @@ export function DashboardView() {
                   <TableHead>Điểm</TableHead>
                   <TableHead>Thời gian</TableHead>
                   <TableHead>Thời điểm</TableHead>
+                  <TableHead className="w-12 text-right"> </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {data.recent_attempts.map((attempt) => {
                   const live = attempt.status === "in_progress";
+                  const name = attemptName(attempt);
                   return (
                     <TableRow
                       key={attempt.id}
@@ -176,7 +206,7 @@ export function DashboardView() {
                           href={`/admin/attempts/${attempt.id}`}
                           className="font-bold text-teal-700 hover:underline"
                         >
-                          {attemptName(attempt)}
+                          {name}
                         </Link>
                       </TableCell>
                       <TableCell>{attempt.quiz?.title ?? "—"}</TableCell>
@@ -205,6 +235,27 @@ export function DashboardView() {
                         {live
                           ? `Bắt đầu ${relativeTime(attempt.started_at)}`
                           : relativeTime(attempt.submitted_at)}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <Button
+                          type="button"
+                          variant="ghost"
+                          size="icon"
+                          className="size-8 text-slate-400 hover:text-rose-600"
+                          aria-label={`Xoá bản ghi của ${name}`}
+                          disabled={
+                            deleteMutation.isPending &&
+                            deleteMutation.variables === attempt.id
+                          }
+                          onClick={() => handleDelete(attempt.id, name)}
+                        >
+                          {deleteMutation.isPending &&
+                          deleteMutation.variables === attempt.id ? (
+                            <Loader2 className="size-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="size-4" />
+                          )}
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );
