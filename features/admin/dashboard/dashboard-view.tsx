@@ -51,7 +51,12 @@ export function DashboardView() {
   const { data, isLoading, isError, refetch } = useQuery({
     queryKey: ["dashboard-stats"],
     queryFn: getDashboardStats,
-    refetchInterval: 15_000,
+    refetchInterval: (query) => {
+      if (typeof document !== "undefined" && document.hidden) return false;
+      const live = (query.state.data?.in_progress_count ?? 0) > 0;
+      return live ? 30_000 : false;
+    },
+    staleTime: 15_000,
   });
 
   const deleteMutation = useMutation({
@@ -61,7 +66,6 @@ export function DashboardView() {
       toast.success("Đã xoá bản ghi", { id: "delete-attempt" });
       queryClient.invalidateQueries({ queryKey: ["dashboard-stats"] });
       queryClient.invalidateQueries({ queryKey: ["attempts"] });
-      queryClient.invalidateQueries({ queryKey: ["attempts-summary"] });
     },
     onError: (error: Error) =>
       toast.error(error.message || "Không thể xoá", { id: "delete-attempt" }),

@@ -7,7 +7,7 @@ import { Home, Loader2 } from "lucide-react";
 import { QuizPlayer } from "@/features/student/quiz-player/quiz-player";
 import { ErrorState } from "@/components/shared/states";
 import { buttonVariants } from "@/components/ui/button";
-import { getPlayQuiz, startAttempt } from "@/lib/repositories";
+import { beginPlayQuiz } from "@/lib/repositories";
 import { cn } from "@/lib/utils";
 import { useGuestSession } from "@/stores/guest-session";
 import type { Question, Quiz } from "@/types/database";
@@ -35,14 +35,17 @@ export function PlayQuizClient({ quizId }: { quizId: string }) {
     if (!guestId || !displayName) return;
 
     const bootKey = `${guestId}:${quizId}:${retryFrom ?? ""}`;
-    // Prevent Strict Mode / remount from starting parallel boots for same session
     if (bootKeyRef.current === bootKey && state.status === "ready") return;
     bootKeyRef.current = bootKey;
 
     let cancelled = false;
     async function boot() {
       try {
-        const play = await getPlayQuiz(quizId, retryFrom, guestId);
+        const play = await beginPlayQuiz(quizId, {
+          guestName: displayName!,
+          guestId: guestId!,
+          parentAttemptId: retryFrom,
+        });
         if (!play) {
           if (!cancelled) {
             setState({
@@ -52,17 +55,12 @@ export function PlayQuizClient({ quizId }: { quizId: string }) {
           }
           return;
         }
-        const attempt = await startAttempt(quizId, {
-          guestName: displayName!,
-          guestId: guestId!,
-          parentAttemptId: retryFrom,
-        });
         if (!cancelled) {
           setState({
             status: "ready",
             quiz: play.quiz,
             questions: play.questions,
-            attemptId: attempt.id,
+            attemptId: play.attempt.id,
             isRetryWrong: !!retryFrom,
           });
         }
@@ -82,7 +80,6 @@ export function PlayQuizClient({ quizId }: { quizId: string }) {
     return () => {
       cancelled = true;
     };
-    // intentionally omit state.status — only re-boot when identity/quiz changes
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [quizId, retryFrom, guestId, displayName]);
 

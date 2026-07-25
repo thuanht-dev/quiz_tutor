@@ -2,13 +2,12 @@
 
 import { useEffect, useRef } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
-import { Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useIsBusy, useUiLoading } from "@/stores/ui-loading";
 
-const NAV_TIMEOUT_MS = 8_000;
+const NAV_TIMEOUT_MS = 3_000;
 
-/** Top progress bar + soft overlay while navigating or running actions. */
+/** Top progress bar while navigating (no blocking overlay). */
 export function RouteProgress() {
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -68,26 +67,12 @@ export function RouteProgress() {
   }, [startNavigation]);
 
   return (
-    <>
-      <div
-        className={cn(
-          "pointer-events-none fixed inset-x-0 top-0 z-[100] h-1 origin-left bg-gradient-to-r from-teal-500 via-teal-400 to-emerald-500 transition-transform duration-300",
-          busy ? "scale-x-100 animate-pulse" : "scale-x-0"
-        )}
-        aria-hidden
-      />
-      {navigationPending ? (
-        <div
-          className="pointer-events-none fixed inset-0 z-[90] flex items-center justify-center bg-teal-50/40"
-          aria-live="polite"
-          aria-busy="true"
-        >
-          <div className="flex items-center gap-3 rounded-2xl bg-white/95 px-5 py-3 text-sm font-bold text-teal-700 shadow-lg shadow-teal-100 ring-1 ring-teal-100">
-            <Loader2 className="size-5 animate-spin" />
-            Đang tải...
-          </div>
-        </div>
-      ) : null}
-    </>
+    <div
+      className={cn(
+        "pointer-events-none fixed inset-x-0 top-0 z-[100] h-1 origin-left bg-gradient-to-r from-teal-500 via-teal-400 to-emerald-500 transition-transform duration-300",
+        busy ? "scale-x-100 animate-pulse" : "scale-x-0"
+      )}
+      aria-hidden
+    />
   );
 }

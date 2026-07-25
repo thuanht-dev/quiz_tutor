@@ -29,8 +29,9 @@ import type {
 } from "@/lib/validations/schemas";
 import { getCurrentProfile } from "@/lib/auth/actions";
 
-function delay(ms = 120) {
-  return new Promise((r) => setTimeout(r, ms));
+function delay(_ms = 0) {
+  // No artificial latency — mock should feel instant
+  return Promise.resolve();
 }
 
 /** Keep newest in_progress per guest+quiz; leave submitted/expired untouched. */
@@ -77,9 +78,10 @@ export async function getDashboardStats(): Promise<DashboardStats> {
   }
 
   const supabase = await createClient();
+  // One recent fetch covers "đang làm" + hoạt động gần đây (avoid loading all in_progress)
   const [
     { count: attempt_count },
-    { data: inProgressRows },
+    { count: in_progress_count },
     { count: quiz_count },
     { count: question_count },
     recent,
@@ -90,24 +92,22 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .neq("status", "in_progress"),
     supabase
       .from("attempts")
-      .select("*, quiz:quizzes(*, subject:subjects(*)), student:profiles(*)")
-      .eq("status", "in_progress")
-      .order("started_at", { ascending: false }),
+      .select("*", { count: "exact", head: true })
+      .eq("status", "in_progress"),
     supabase.from("quizzes").select("*", { count: "exact", head: true }),
     supabase.from("questions").select("*", { count: "exact", head: true }),
     supabase
       .from("attempts")
       .select("*, quiz:quizzes(*, subject:subjects(*)), student:profiles(*)")
       .order("started_at", { ascending: false })
-      .limit(40),
+      .limit(24),
   ]);
 
-  const inProgress = dedupeAttemptsForAdmin((inProgressRows ?? []) as Attempt[]);
   const recentRows = dedupeAttemptsForAdmin((recent.data ?? []) as Attempt[]);
 
   return {
     attempt_count: attempt_count ?? 0,
-    in_progress_count: inProgress.length,
+    in_progress_count: in_progress_count ?? 0,
     quiz_count: quiz_count ?? 0,
     question_count: question_count ?? 0,
     recent_attempts: recentRows.slice(0, 8),
@@ -1135,4 +1135,23 @@ export async function getPlayQuiz(
       : (q.options?.map(({ is_correct: _omit, ...rest }) => rest) ?? []),
   }));
   return { quiz, questions: safeQuestions as Question[] };
+}
+
+/** One round-trip: load quiz + start/reuse attempt (faster play boot). */
+export async function beginPlayQuiz(
+  quizId: string,
+  opts: {
+    guestName: string;
+    guestId: string;
+    parentAttemptId?: string | null;
+  }
+) {
+  const play = await getPlayQuiz(
+    quizId,
+    opts.parentAttemptId,
+    opts.guestId
+  );
+  if (!play) return null;
+  const attempt = await startAttempt(quizId, opts);
+  return { ...play, attempt };
 }

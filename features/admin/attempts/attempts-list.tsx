@@ -1,6 +1,6 @@
 ﻿"use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { GraduationCap, Radio } from "lucide-react";
@@ -72,46 +72,55 @@ function elapsedSince(startedAt: string) {
 
 export function AttemptsList() {
   const [nameFilter, setNameFilter] = useState("");
+  const [debouncedName, setDebouncedName] = useState("");
   const [quizFilter, setQuizFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+
+  useEffect(() => {
+    const t = window.setTimeout(() => setDebouncedName(nameFilter.trim()), 300);
+    return () => window.clearTimeout(t);
+  }, [nameFilter]);
 
   const { data: quizzes } = useQuery({
     queryKey: ["quizzes", { subject: "all", status: "all" }],
     queryFn: () => listQuizzes(),
+    staleTime: 60_000,
   });
 
-  const { data, isLoading, isError, refetch, dataUpdatedAt } = useQuery({
-    queryKey: ["attempts", { nameFilter, quizFilter, statusFilter }],
-    queryFn: () =>
-      listAttempts({
-        guest_name: nameFilter.trim() || undefined,
-        quiz_id: quizFilter === "all" ? undefined : quizFilter,
-        status: statusFilter,
-      }),
-    refetchInterval: 10_000,
-  });
-
-  // Summary cards always reflect all statuses (with name/quiz filters)
-  const { data: summary } = useQuery({
-    queryKey: ["attempts-summary", { nameFilter, quizFilter }],
-    queryFn: () =>
-      listAttempts({
-        guest_name: nameFilter.trim() || undefined,
-        quiz_id: quizFilter === "all" ? undefined : quizFilter,
-        status: "all",
-      }),
-    refetchInterval: 10_000,
-  });
+  // Single fetch — filter status on client to avoid double polling
+  const { data: allAttempts, isLoading, isError, refetch, dataUpdatedAt } =
+    useQuery({
+      queryKey: ["attempts", { quizFilter, name: debouncedName }],
+      queryFn: () =>
+        listAttempts({
+          guest_name: debouncedName || undefined,
+          quiz_id: quizFilter === "all" ? undefined : quizFilter,
+          status: "all",
+        }),
+      refetchInterval: (query) => {
+        if (typeof document !== "undefined" && document.hidden) return false;
+        const rows = query.state.data ?? [];
+        const hasLive = rows.some((a) => a.status === "in_progress");
+        return hasLive ? 20_000 : false;
+      },
+      staleTime: 10_000,
+    });
 
   const summaryCounts = useMemo(() => {
-    const rows = summary ?? [];
+    const rows = allAttempts ?? [];
     return {
       all: rows.length,
       in_progress: rows.filter((a) => a.status === "in_progress").length,
       submitted: rows.filter((a) => a.status === "submitted").length,
       expired: rows.filter((a) => a.status === "expired").length,
     };
-  }, [summary]);
+  }, [allAttempts]);
+
+  const data = useMemo(() => {
+    const rows = allAttempts ?? [];
+    if (statusFilter === "all") return rows;
+    return rows.filter((a) => a.status === statusFilter);
+  }, [allAttempts, statusFilter]);
 
   return (
     <div>
