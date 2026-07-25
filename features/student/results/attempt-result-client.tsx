@@ -4,7 +4,10 @@ import { useQuery } from "@tanstack/react-query";
 import { Loader2 } from "lucide-react";
 import { ResultView } from "@/features/student/results/result-view";
 import { ErrorState } from "@/components/shared/states";
-import { getAttempt } from "@/lib/repositories";
+import {
+  getAttempt,
+  getRetryWrongEligibility,
+} from "@/lib/repositories";
 import { useGuestSession } from "@/stores/guest-session";
 
 export function AttemptResultClient({ attemptId }: { attemptId: string }) {
@@ -14,6 +17,12 @@ export function AttemptResultClient({ attemptId }: { attemptId: string }) {
     queryKey: ["attempt-result", attemptId, guestId],
     queryFn: () => getAttempt(attemptId, guestId),
     enabled: !!guestId,
+  });
+
+  const eligibilityQuery = useQuery({
+    queryKey: ["retry-wrong-eligibility", data?.quiz_id, guestId],
+    queryFn: () => getRetryWrongEligibility(data!.quiz_id, guestId!),
+    enabled: !!guestId && !!data?.quiz_id,
   });
 
   if (!guestId || isLoading) {
@@ -39,5 +48,10 @@ export function AttemptResultClient({ attemptId }: { attemptId: string }) {
     );
   }
 
-  return <ResultView attempt={data} />;
+  return (
+    <ResultView
+      attempt={data}
+      retryEligibility={eligibilityQuery.data ?? null}
+    />
+  );
 }

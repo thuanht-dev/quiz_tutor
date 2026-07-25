@@ -47,6 +47,7 @@ export function QuizForm({
       description: quiz?.description ?? "",
       time_limit_seconds: quiz?.time_limit_seconds ?? null,
       pass_percent: quiz?.pass_percent ?? 85,
+      retry_wrong_after_fails: quiz?.retry_wrong_after_fails ?? 3,
       auto_advance_on_answer: quiz?.auto_advance_on_answer ?? false,
       show_explanation_on_answer: quiz?.show_explanation_on_answer ?? false,
       status: quiz?.status ?? "draft",
@@ -215,6 +216,31 @@ export function QuizForm({
           {form.formState.errors.pass_percent ? (
             <p className="text-sm text-rose-500">
               {form.formState.errors.pass_percent.message}
+            </p>
+          ) : null}
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor="quiz-retry-after-fails">
+            Mở làm lại câu sai sau (lần không đạt)
+          </Label>
+          <Input
+            id="quiz-retry-after-fails"
+            type="number"
+            min={0}
+            max={100}
+            className="h-11 rounded-xl"
+            {...form.register("retry_wrong_after_fails", {
+              valueAsNumber: true,
+            })}
+          />
+          <p className="text-xs text-slate-500">
+            Học sinh phải làm bài đầy đủ không đạt đủ số lần này mới được làm
+            lại các câu sai. 0 = tắt tính năng (mặc định 3).
+          </p>
+          {form.formState.errors.retry_wrong_after_fails ? (
+            <p className="text-sm text-rose-500">
+              {form.formState.errors.retry_wrong_after_fails.message}
             </p>
           ) : null}
         </div>

@@ -197,7 +197,17 @@ function ReviewItem({ index, answer }: { index: number; answer: AttemptAnswer })
   );
 }
 
-export function ResultView({ attempt }: { attempt: Attempt }) {
+export function ResultView({
+  attempt,
+  retryEligibility,
+}: {
+  attempt: Attempt;
+  retryEligibility?: {
+    canRetryWrong: boolean;
+    failCount: number;
+    requiredFails: number;
+  } | null;
+}) {
   const percent = scorePercent(attempt.score, attempt.max_score);
   const wrong = Math.max(0, attempt.total_questions - attempt.correct_count);
   const passPercent = attempt.quiz?.pass_percent ?? 85;
@@ -207,11 +217,24 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
   const soundEnabled = useQuizSession((s) => s.soundEnabled);
   const celebratedRef = useRef(false);
 
+  const requiredFails =
+    retryEligibility?.requiredFails ??
+    attempt.quiz?.retry_wrong_after_fails ??
+    3;
+  const canRetryWrong =
+    wrongAnswers.length > 0 &&
+    (retryEligibility?.canRetryWrong ?? false);
+  const failCount = retryEligibility?.failCount ?? 0;
+
   const message = passed
     ? "Đạt rồi! Giỏi quá!"
     : attempt.is_retry_wrong
       ? "Chưa đạt, luyện thêm các câu sai nhé!"
-      : "Chưa đạt yêu cầu, làm lại các câu sai nhé!";
+      : canRetryWrong
+        ? "Chưa đạt yêu cầu, làm lại các câu sai nhé!"
+        : requiredFails > 0
+          ? `Chưa đạt — làm lại cả bài (làm lại câu sai mở sau ${requiredFails} lần chưa đạt)`
+          : "Chưa đạt yêu cầu, hãy làm lại cả bài nhé!";
 
   useEffect(() => {
     if (celebratedRef.current) return;
@@ -343,7 +366,7 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
             >
               <Home className="size-4" /> Về trang chủ
             </PendingLink>
-            {wrongAnswers.length > 0 ? (
+            {wrongAnswers.length > 0 && canRetryWrong ? (
               <PendingLink
                 href={`/quizzes/${attempt.quiz_id}/play?retryFrom=${attempt.id}`}
                 className="kid-btn inline-flex items-center justify-center gap-2 bg-amber-500 text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-amber-600 hover:shadow-lg active:translate-y-0"
@@ -358,6 +381,15 @@ export function ResultView({ attempt }: { attempt: Attempt }) {
               <RotateCcw className="size-4" /> Làm lại cả bài
             </PendingLink>
           </div>
+          {!passed &&
+          wrongAnswers.length > 0 &&
+          !canRetryWrong &&
+          requiredFails > 0 ? (
+            <p className="text-sm text-amber-700">
+              Làm lại câu sai mở sau {requiredFails} lần chưa đạt (hiện{" "}
+              {failCount}/{requiredFails})
+            </p>
+          ) : null}
         </div>
       </div>
 

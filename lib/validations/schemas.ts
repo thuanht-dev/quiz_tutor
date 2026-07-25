@@ -22,6 +22,7 @@ export const quizSchema = z.object({
   description: z.string().optional().nullable(),
   time_limit_seconds: z.number().int().positive().optional().nullable(),
   pass_percent: z.number().int().min(1).max(100),
+  retry_wrong_after_fails: z.number().int().min(0).max(100),
   auto_advance_on_answer: z.boolean(),
   show_explanation_on_answer: z.boolean(),
   status: z.enum(["draft", "published", "archived"]),

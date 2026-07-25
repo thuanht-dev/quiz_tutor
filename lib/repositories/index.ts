@@ -263,6 +263,7 @@ export async function createQuiz(values: QuizValues) {
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
       pass_percent: values.pass_percent ?? 85,
+      retry_wrong_after_fails: values.retry_wrong_after_fails ?? 3,
       auto_advance_on_answer: values.auto_advance_on_answer ?? false,
       show_explanation_on_answer: values.show_explanation_on_answer ?? false,
       status: values.status,
@@ -280,6 +281,7 @@ export async function createQuiz(values: QuizValues) {
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
       pass_percent: values.pass_percent ?? 85,
+      retry_wrong_after_fails: values.retry_wrong_after_fails ?? 3,
       auto_advance_on_answer: values.auto_advance_on_answer ?? false,
       show_explanation_on_answer: values.show_explanation_on_answer ?? false,
       status: values.status,
@@ -300,6 +302,7 @@ export async function updateQuiz(id: string, values: QuizValues) {
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
       pass_percent: values.pass_percent ?? 85,
+      retry_wrong_after_fails: values.retry_wrong_after_fails ?? 3,
       auto_advance_on_answer: values.auto_advance_on_answer ?? false,
       show_explanation_on_answer: values.show_explanation_on_answer ?? false,
     };
@@ -314,6 +317,7 @@ export async function updateQuiz(id: string, values: QuizValues) {
       description: values.description ?? null,
       time_limit_seconds: values.time_limit_seconds ?? null,
       pass_percent: values.pass_percent ?? 85,
+      retry_wrong_after_fails: values.retry_wrong_after_fails ?? 3,
       auto_advance_on_answer: values.auto_advance_on_answer ?? false,
       show_explanation_on_answer: values.show_explanation_on_answer ?? false,
       status: values.status,
@@ -927,6 +931,64 @@ export async function listStudentHomeData(guestId: string) {
   };
 }
 
+export async function countFailedFullAttempts(
+  quizId: string,
+  guestId: string
+): Promise<number> {
+  if (USE_MOCK) {
+    return db.attempts.filter(
+      (a) =>
+        a.quiz_id === quizId &&
+        a.guest_id === guestId &&
+        !a.is_retry_wrong &&
+        a.status !== "in_progress" &&
+        a.passed === false
+    ).length;
+  }
+
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("list_guest_attempts", {
+    p_guest_id: guestId,
+  });
+  if (error) throw error;
+  return ((data as Attempt[]) ?? []).filter(
+    (a) =>
+      a.quiz_id === quizId &&
+      !a.is_retry_wrong &&
+      a.passed === false
+  ).length;
+}
+
+export async function getRetryWrongEligibility(
+  quizId: string,
+  guestId: string
+): Promise<{
+  canRetryWrong: boolean;
+  failCount: number;
+  requiredFails: number;
+}> {
+  let requiredFails = 3;
+  if (USE_MOCK) {
+    requiredFails =
+      db.quizzes.find((q) => q.id === quizId)?.retry_wrong_after_fails ?? 3;
+  } else {
+    const supabase = await createClient();
+    const { data } = await supabase
+      .from("quizzes")
+      .select("retry_wrong_after_fails")
+      .eq("id", quizId)
+      .maybeSingle();
+    requiredFails = data?.retry_wrong_after_fails ?? 3;
+  }
+
+  const failCount = await countFailedFullAttempts(quizId, guestId);
+  return {
+    canRetryWrong: requiredFails > 0 && failCount >= requiredFails,
+    failCount,
+    requiredFails,
+  };
+}
+
 export async function startAttempt(
   quizId: string,
   opts: {
@@ -1001,6 +1063,19 @@ export async function startAttempt(
       );
       existing.guest_name = guestName;
       return enrichAttempt(existing);
+    }
+
+    if (is_retry_wrong) {
+      const required = quiz.retry_wrong_after_fails ?? 3;
+      if (required === 0) {
+        throw new Error("Quiz này không cho làm lại câu sai");
+      }
+      const failCount = await countFailedFullAttempts(quizId, guestId);
+      if (failCount < required) {
+        throw new Error(
+          `Cần chưa đạt ${required} lần mới được làm lại câu sai (hiện ${failCount}/${required})`
+        );
+      }
     }
 
     const attempt: Attempt = {

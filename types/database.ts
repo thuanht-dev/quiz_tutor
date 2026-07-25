@@ -31,6 +31,8 @@ export interface Quiz {
   description: string | null;
   time_limit_seconds: number | null;
   pass_percent: number;
+  /** Số lần làm bài đầy đủ không đạt trước khi mở làm lại câu sai. 0 = tắt. */
+  retry_wrong_after_fails: number;
   auto_advance_on_answer: boolean;
   show_explanation_on_answer: boolean;
   status: QuizStatus;
