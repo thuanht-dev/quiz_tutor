@@ -10,6 +10,7 @@ import {
   LogOut,
   Menu,
   GraduationCap,
+  Settings,
 } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
@@ -25,6 +26,7 @@ const links = [
   { href: "/admin/quizzes", label: "Quiz", icon: ClipboardList },
   { href: "/admin/questions", label: "Ngân hàng", icon: HelpCircle },
   { href: "/admin/attempts", label: "Bài làm", icon: GraduationCap },
+  { href: "/admin/settings", label: "Cài đặt", icon: Settings },
 ];
 
 function NavLinks({ onNavigate }: { onNavigate?: () => void }) {

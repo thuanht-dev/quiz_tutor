@@ -34,6 +34,7 @@ export const db = {
   attemptAnswers: [...mockAttemptAnswers] as AttemptAnswer[],
   passwords: { ...mockPasswords } as Record<string, string>,
   sessionUserId: null as string | null,
+  appSettings: {} as Record<string, unknown>,
 };
 
 export function uid() {

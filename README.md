@@ -42,6 +42,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
    - `supabase/migrations/20260324000005_guest_attempts.sql`
    - `supabase/migrations/20260324000006_admin_delete_cascade.sql`
    - `supabase/migrations/20260324000007_reuse_in_progress_attempt.sql`
+   - `supabase/migrations/20260324000008_app_settings.sql`
    - `supabase/seed.sql` (môn / quiz / câu hỏi mẫu)
 
 3. Seed dữ liệu:
@@ -62,6 +63,25 @@ npm run seed:all
 ```bash
 npm run dev
 ```
+
+## Email thông báo
+
+Gửi email cho gia sư/phụ huynh khi học sinh **bắt đầu làm bài** và **nộp bài** (kèm điểm, kết quả đạt/chưa đạt).
+
+1. Thêm SMTP vào `.env.local` (Gmail: tạo App Password tại myaccount.google.com → Security → 2-Step Verification → App passwords):
+
+```env
+SMTP_HOST=smtp.gmail.com
+SMTP_PORT=465
+SMTP_USER=your-email@gmail.com
+SMTP_PASS=your-app-password
+SMTP_FROM="Tutor Quiz <your-email@gmail.com>"
+```
+
+2. Chạy migration `20260324000008_app_settings.sql` (nếu dùng Supabase).
+3. Vào **Admin → Cài đặt**: bật thông báo, nhập danh sách email người nhận, chọn sự kiện (bắt đầu / nộp bài), bấm **Gửi email thử** để kiểm tra.
+
+Email gửi sau khi response trả về (dùng `after()` của Next) nên không làm chậm học sinh. Refresh trang khi đang làm bài không gửi lại email bắt đầu.
 
 ## Mô hình người dùng
 

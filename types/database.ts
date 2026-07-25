@@ -121,6 +121,13 @@ export interface StudentQuizCard extends Quiz {
   best_passed: boolean | null;
 }
 
+export interface NotificationSettings {
+  enabled: boolean;
+  recipients: string[];
+  notify_on_start: boolean;
+  notify_on_submit: boolean;
+}
+
 export interface ImportQuestionRow {
   Question: string;
   A: string;

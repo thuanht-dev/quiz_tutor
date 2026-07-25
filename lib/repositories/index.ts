@@ -28,6 +28,14 @@ import type {
   SubjectValues,
 } from "@/lib/validations/schemas";
 import { getCurrentProfile } from "@/lib/auth/actions";
+import { after } from "next/server";
+import {
+  loadNotificationSettings,
+  notifyAttemptStarted,
+  notifyAttemptSubmitted,
+  saveNotificationSettings,
+} from "@/lib/email/notifications";
+import type { NotificationSettings } from "@/types/database";
 
 function delay(_ms = 0) {
   // No artificial latency — mock should feel instant
@@ -1015,7 +1023,9 @@ export async function startAttempt(
       created_at: new Date().toISOString(),
     };
     db.attempts.push(attempt);
-    return enrichAttempt(attempt);
+    const enriched = enrichAttempt(attempt);
+    after(() => notifyAttemptStarted(enriched));
+    return enriched;
   }
 
   const supabase = await createClient();
@@ -1026,7 +1036,15 @@ export async function startAttempt(
     p_parent_attempt_id: opts.parentAttemptId ?? null,
   });
   if (error) throw error;
-  return data as Attempt;
+  const attempt = data as Attempt;
+
+  // RPC may return a reused in-progress attempt (refresh). Only notify when
+  // the attempt was just created to avoid spamming on every reload.
+  const startedMs = new Date(attempt.started_at).getTime();
+  if (Date.now() - startedMs < 10_000) {
+    after(() => notifyAttemptStarted(attempt));
+  }
+  return attempt;
 }
 
 export async function submitAttempt(
@@ -1089,7 +1107,9 @@ export async function submitAttempt(
     );
     attempt.status = expired ? "expired" : "submitted";
     attempt.passed = percent >= (quiz?.pass_percent ?? 85);
-    return enrichAttempt(attempt);
+    const enriched = enrichAttempt(attempt);
+    after(() => notifyAttemptSubmitted(enriched));
+    return enriched;
   }
 
   const supabase = await createClient();
@@ -1100,7 +1120,9 @@ export async function submitAttempt(
     p_guest_id: guestId ?? null,
   });
   if (error) throw error;
-  return data as Attempt;
+  const attempt = data as Attempt;
+  after(() => notifyAttemptSubmitted(attempt));
+  return attempt;
 }
 
 export async function getPlayQuiz(
@@ -1135,6 +1157,31 @@ export async function getPlayQuiz(
       : (q.options?.map(({ is_correct: _omit, ...rest }) => rest) ?? []),
   }));
   return { quiz, questions: safeQuestions as Question[] };
+}
+
+// ---------------------------------------------------------------------------
+// Notification settings (admin)
+// ---------------------------------------------------------------------------
+export async function getNotificationSettings(): Promise<NotificationSettings> {
+  const profile = await getCurrentProfile();
+  if (profile?.role !== "admin") throw new Error("Không có quyền");
+  return loadNotificationSettings();
+}
+
+export async function updateNotificationSettings(
+  settings: NotificationSettings
+): Promise<NotificationSettings> {
+  const profile = await getCurrentProfile();
+  if (profile?.role !== "admin") throw new Error("Không có quyền");
+  return saveNotificationSettings(settings);
+}
+
+/** Gửi email thử tới danh sách người nhận đã cấu hình. */
+export async function sendTestNotification(): Promise<void> {
+  const profile = await getCurrentProfile();
+  if (profile?.role !== "admin") throw new Error("Không có quyền");
+  const { sendTestEmail } = await import("@/lib/email/notifications");
+  await sendTestEmail();
 }
 
 /** One round-trip: load quiz + start/reuse attempt (faster play boot). */
