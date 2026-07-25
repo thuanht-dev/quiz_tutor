@@ -41,6 +41,7 @@ SUPABASE_SERVICE_ROLE_KEY=...
    - `supabase/migrations/20260324000004_quiz_play_options.sql`
    - `supabase/migrations/20260324000005_guest_attempts.sql`
    - `supabase/migrations/20260324000006_admin_delete_cascade.sql`
+   - `supabase/migrations/20260324000007_reuse_in_progress_attempt.sql`
    - `supabase/seed.sql` (môn / quiz / câu hỏi mẫu)
 
 3. Seed dữ liệu:

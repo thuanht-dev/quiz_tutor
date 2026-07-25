@@ -33,38 +33,53 @@ function delay(ms = 120) {
   return new Promise((r) => setTimeout(r, ms));
 }
 
+/** Keep newest in_progress per guest+quiz; leave submitted/expired untouched. */
+function dedupeAttemptsForAdmin(rows: Attempt[]): Attempt[] {
+  const sorted = [...rows].sort((a, b) => {
+    if (a.status === "in_progress" && b.status !== "in_progress") return -1;
+    if (b.status === "in_progress" && a.status !== "in_progress") return 1;
+    return (
+      new Date(b.submitted_at ?? b.started_at).getTime() -
+      new Date(a.submitted_at ?? a.started_at).getTime()
+    );
+  });
+
+  const seen = new Set<string>();
+  const out: Attempt[] = [];
+  for (const a of sorted) {
+    const key =
+      a.status === "in_progress"
+        ? `ip:${a.guest_id ?? a.guest_name}|${a.quiz_id}|${a.is_retry_wrong ? 1 : 0}|${a.parent_attempt_id ?? ""}`
+        : a.id;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    out.push(a);
+  }
+  return out;
+}
+
 // ---------------------------------------------------------------------------
 // Dashboard
 // ---------------------------------------------------------------------------
 export async function getDashboardStats(): Promise<DashboardStats> {
   if (USE_MOCK) {
     await delay();
-    const completed = db.attempts.filter((a) => a.status !== "in_progress");
-    const inProgress = db.attempts.filter((a) => a.status === "in_progress");
+    const all = dedupeAttemptsForAdmin(db.attempts.map(enrichAttempt));
+    const completed = all.filter((a) => a.status !== "in_progress");
+    const inProgress = all.filter((a) => a.status === "in_progress");
     return {
       attempt_count: completed.length,
       in_progress_count: inProgress.length,
       quiz_count: db.quizzes.length,
       question_count: db.questions.length,
-      recent_attempts: [...db.attempts]
-        .sort((a, b) => {
-          // In-progress first, then by latest activity
-          if (a.status === "in_progress" && b.status !== "in_progress") return -1;
-          if (b.status === "in_progress" && a.status !== "in_progress") return 1;
-          return (
-            new Date(b.submitted_at ?? b.started_at).getTime() -
-            new Date(a.submitted_at ?? a.started_at).getTime()
-          );
-        })
-        .slice(0, 8)
-        .map(enrichAttempt),
+      recent_attempts: all.slice(0, 8),
     };
   }
 
   const supabase = await createClient();
   const [
     { count: attempt_count },
-    { count: in_progress_count },
+    { data: inProgressRows },
     { count: quiz_count },
     { count: question_count },
     recent,
@@ -75,30 +90,24 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       .neq("status", "in_progress"),
     supabase
       .from("attempts")
-      .select("*", { count: "exact", head: true })
-      .eq("status", "in_progress"),
+      .select("*, quiz:quizzes(*, subject:subjects(*)), student:profiles(*)")
+      .eq("status", "in_progress")
+      .order("started_at", { ascending: false }),
     supabase.from("quizzes").select("*", { count: "exact", head: true }),
     supabase.from("questions").select("*", { count: "exact", head: true }),
     supabase
       .from("attempts")
       .select("*, quiz:quizzes(*, subject:subjects(*)), student:profiles(*)")
       .order("started_at", { ascending: false })
-      .limit(12),
+      .limit(40),
   ]);
 
-  const recentRows = (recent.data ?? []) as Attempt[];
-  recentRows.sort((a, b) => {
-    if (a.status === "in_progress" && b.status !== "in_progress") return -1;
-    if (b.status === "in_progress" && a.status !== "in_progress") return 1;
-    return (
-      new Date(b.submitted_at ?? b.started_at).getTime() -
-      new Date(a.submitted_at ?? a.started_at).getTime()
-    );
-  });
+  const inProgress = dedupeAttemptsForAdmin((inProgressRows ?? []) as Attempt[]);
+  const recentRows = dedupeAttemptsForAdmin((recent.data ?? []) as Attempt[]);
 
   return {
     attempt_count: attempt_count ?? 0,
-    in_progress_count: in_progress_count ?? 0,
+    in_progress_count: inProgress.length,
     quiz_count: quiz_count ?? 0,
     question_count: question_count ?? 0,
     recent_attempts: recentRows.slice(0, 8),
@@ -665,23 +674,17 @@ export async function listAttempts(filters?: {
   if (USE_MOCK) {
     await delay();
     const name = filters?.guest_name?.trim().toLowerCase();
-    return db.attempts
-      .filter((a) => statusFilter === "all" || a.status === statusFilter)
-      .filter(
-        (a) =>
-          !name ||
-          (a.guest_name ?? "").toLowerCase().includes(name)
-      )
-      .filter((a) => !filters?.quiz_id || a.quiz_id === filters.quiz_id)
-      .map(enrichAttempt)
-      .sort((a, b) => {
-        if (a.status === "in_progress" && b.status !== "in_progress") return -1;
-        if (b.status === "in_progress" && a.status !== "in_progress") return 1;
-        return (
-          new Date(b.submitted_at ?? b.started_at).getTime() -
-          new Date(a.submitted_at ?? a.started_at).getTime()
-        );
-      });
+    return dedupeAttemptsForAdmin(
+      db.attempts
+        .filter((a) => statusFilter === "all" || a.status === statusFilter)
+        .filter(
+          (a) =>
+            !name ||
+            (a.guest_name ?? "").toLowerCase().includes(name)
+        )
+        .filter((a) => !filters?.quiz_id || a.quiz_id === filters.quiz_id)
+        .map(enrichAttempt)
+    );
   }
   const supabase = await createClient();
   let query = supabase
@@ -697,15 +700,7 @@ export async function listAttempts(filters?: {
   if (filters?.quiz_id) query = query.eq("quiz_id", filters.quiz_id);
   const { data, error } = await query;
   if (error) throw error;
-  const rows = (data ?? []) as Attempt[];
-  return rows.sort((a, b) => {
-    if (a.status === "in_progress" && b.status !== "in_progress") return -1;
-    if (b.status === "in_progress" && a.status !== "in_progress") return 1;
-    return (
-      new Date(b.submitted_at ?? b.started_at).getTime() -
-      new Date(a.submitted_at ?? a.started_at).getTime()
-    );
-  });
+  return dedupeAttemptsForAdmin((data ?? []) as Attempt[]);
 }
 
 export async function getAttempt(
@@ -945,6 +940,39 @@ export async function startAttempt(
     }
 
     if (!questions.length) throw new Error("Quiz chưa có câu hỏi");
+
+    // Reuse open attempt for same guest + quiz (avoid spam on refresh)
+    const existing = db.attempts
+      .filter(
+        (a) =>
+          a.quiz_id === quizId &&
+          a.guest_id === guestId &&
+          a.status === "in_progress" &&
+          !!a.is_retry_wrong === is_retry_wrong &&
+          (a.parent_attempt_id ?? null) === parent_attempt_id
+      )
+      .sort(
+        (a, b) =>
+          new Date(b.started_at).getTime() - new Date(a.started_at).getTime()
+      )[0];
+
+    if (existing) {
+      const keepId = existing.id;
+      db.attempts = db.attempts.filter(
+        (a) =>
+          !(
+            a.quiz_id === quizId &&
+            a.guest_id === guestId &&
+            a.status === "in_progress" &&
+            !!a.is_retry_wrong === is_retry_wrong &&
+            (a.parent_attempt_id ?? null) === parent_attempt_id &&
+            a.id !== keepId
+          )
+      );
+      existing.guest_name = guestName;
+      return enrichAttempt(existing);
+    }
+
     const attempt: Attempt = {
       id: uid(),
       quiz_id: quizId,
