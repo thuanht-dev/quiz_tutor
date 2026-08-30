@@ -25,6 +25,7 @@ export const quizSchema = z.object({
   retry_wrong_after_fails: z.number().int().min(0).max(100),
   auto_advance_on_answer: z.boolean(),
   show_explanation_on_answer: z.boolean(),
+  shuffle_on_retry: z.boolean(),
   status: z.enum(["draft", "published", "archived"]),
 });
 

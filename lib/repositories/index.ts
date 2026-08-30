@@ -28,6 +28,45 @@ import type {
   SubjectValues,
 } from "@/lib/validations/schemas";
 import { getCurrentProfile } from "@/lib/auth/actions";
+
+// ---------------------------------------------------------------------------
+// Shuffle helpers
+// ---------------------------------------------------------------------------
+
+/** Fisher-Yates shuffle algorithm */
+function shuffleArray<T>(array: T[]): T[] {
+  const arr = [...array];
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr;
+}
+
+/** Count completed (non-retry, non-in_progress) attempts for this guest + quiz */
+async function countCompletedAttempts(
+  quizId: string,
+  guestId: string
+): Promise<number> {
+  if (USE_MOCK) {
+    return db.attempts.filter(
+      (a) =>
+        a.quiz_id === quizId &&
+        a.guest_id === guestId &&
+        !a.is_retry_wrong &&
+        a.status !== "in_progress"
+    ).length;
+  }
+  const supabase = await createClient();
+  const { data } = await supabase.rpc("list_guest_attempts", {
+    p_guest_id: guestId,
+  });
+  return (
+    ((data as Attempt[]) ?? []).filter(
+      (a) => a.quiz_id === quizId && !a.is_retry_wrong
+    ).length ?? 0
+  );
+}
 import { after } from "next/server";
 import {
   loadNotificationSettings,
@@ -266,6 +305,7 @@ export async function createQuiz(values: QuizValues) {
       retry_wrong_after_fails: values.retry_wrong_after_fails ?? 3,
       auto_advance_on_answer: values.auto_advance_on_answer ?? false,
       show_explanation_on_answer: values.show_explanation_on_answer ?? false,
+      shuffle_on_retry: values.shuffle_on_retry ?? false,
       status: values.status,
       created_at: new Date().toISOString(),
     };
@@ -284,6 +324,7 @@ export async function createQuiz(values: QuizValues) {
       retry_wrong_after_fails: values.retry_wrong_after_fails ?? 3,
       auto_advance_on_answer: values.auto_advance_on_answer ?? false,
       show_explanation_on_answer: values.show_explanation_on_answer ?? false,
+      shuffle_on_retry: values.shuffle_on_retry ?? false,
       status: values.status,
     })
     .select()
@@ -305,6 +346,7 @@ export async function updateQuiz(id: string, values: QuizValues) {
       retry_wrong_after_fails: values.retry_wrong_after_fails ?? 3,
       auto_advance_on_answer: values.auto_advance_on_answer ?? false,
       show_explanation_on_answer: values.show_explanation_on_answer ?? false,
+      shuffle_on_retry: values.shuffle_on_retry ?? false,
     };
     return enrichQuiz(db.quizzes[idx]);
   }
@@ -320,6 +362,7 @@ export async function updateQuiz(id: string, values: QuizValues) {
       retry_wrong_after_fails: values.retry_wrong_after_fails ?? 3,
       auto_advance_on_answer: values.auto_advance_on_answer ?? false,
       show_explanation_on_answer: values.show_explanation_on_answer ?? false,
+      shuffle_on_retry: values.shuffle_on_retry ?? false,
       status: values.status,
     })
     .eq("id", id)
@@ -1078,6 +1121,28 @@ export async function startAttempt(
       }
     }
 
+    // Shuffle logic: nếu quiz bật shuffle_on_retry VÀ đây không phải lần đầu làm (attempt_count > 0)
+    let shuffled_question_order: string[] | null = null;
+    let shuffled_option_orders: Record<string, string[]> | null = null;
+
+    if (quiz.shuffle_on_retry && !is_retry_wrong) {
+      const completedCount = await countCompletedAttempts(quizId, guestId);
+      if (completedCount > 0) {
+        // Đảo thứ tự câu hỏi
+        const shuffledQuestions = shuffleArray(questions);
+        shuffled_question_order = shuffledQuestions.map((q) => q.id);
+
+        // Đảo thứ tự đáp án cho từng câu
+        shuffled_option_orders = {};
+        for (const q of questions) {
+          const optionIds = (q.options ?? []).map((o) => o.id);
+          shuffled_option_orders[q.id] = shuffleArray(optionIds);
+        }
+
+        questions = shuffledQuestions;
+      }
+    }
+
     const attempt: Attempt = {
       id: uid(),
       quiz_id: quizId,
@@ -1095,6 +1160,8 @@ export async function startAttempt(
       passed: null,
       parent_attempt_id,
       is_retry_wrong,
+      shuffled_question_order,
+      shuffled_option_orders,
       created_at: new Date().toISOString(),
     };
     db.attempts.push(attempt);
@@ -1275,5 +1342,35 @@ export async function beginPlayQuiz(
   );
   if (!play) return null;
   const attempt = await startAttempt(quizId, opts);
-  return { ...play, attempt };
+
+  // Apply shuffle order từ attempt (nếu có)
+  let { questions } = play;
+  if (attempt.shuffled_question_order) {
+    // Sắp xếp lại câu hỏi theo order đã shuffle
+    const orderMap = new Map(
+      attempt.shuffled_question_order.map((id, i) => [id, i])
+    );
+    questions = [...questions].sort((a, b) => {
+      const aIdx = orderMap.get(a.id) ?? 999;
+      const bIdx = orderMap.get(b.id) ?? 999;
+      return aIdx - bIdx;
+    });
+  }
+
+  if (attempt.shuffled_option_orders) {
+    // Sắp xếp lại đáp án cho từng câu hỏi
+    questions = questions.map((q) => {
+      const optionOrder = attempt.shuffled_option_orders?.[q.id];
+      if (!optionOrder || !q.options) return q;
+      const orderMap = new Map(optionOrder.map((id, i) => [id, i]));
+      const sortedOptions = [...q.options].sort((a, b) => {
+        const aIdx = orderMap.get(a.id) ?? 999;
+        const bIdx = orderMap.get(b.id) ?? 999;
+        return aIdx - bIdx;
+      });
+      return { ...q, options: sortedOptions };
+    });
+  }
+
+  return { ...play, questions, attempt };
 }

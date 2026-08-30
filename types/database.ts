@@ -35,6 +35,8 @@ export interface Quiz {
   retry_wrong_after_fails: number;
   auto_advance_on_answer: boolean;
   show_explanation_on_answer: boolean;
+  /** Đảo câu hỏi và đáp án khi làm bài lại (lần 2+). */
+  shuffle_on_retry: boolean;
   status: QuizStatus;
   created_at: string;
   updated_at?: string;
@@ -88,6 +90,8 @@ export interface Attempt {
   passed: boolean | null;
   parent_attempt_id: string | null;
   is_retry_wrong: boolean;
+  shuffled_question_order: string[] | null;
+  shuffled_option_orders: Record<string, string[]> | null;
   created_at: string;
   quiz?: Quiz;
   student?: Profile;

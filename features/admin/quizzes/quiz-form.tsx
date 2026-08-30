@@ -50,6 +50,7 @@ export function QuizForm({
       retry_wrong_after_fails: quiz?.retry_wrong_after_fails ?? 3,
       auto_advance_on_answer: quiz?.auto_advance_on_answer ?? false,
       show_explanation_on_answer: quiz?.show_explanation_on_answer ?? false,
+      shuffle_on_retry: quiz?.shuffle_on_retry ?? false,
       status: quiz?.status ?? "draft",
     },
   });
@@ -284,6 +285,27 @@ export function QuizForm({
               </div>
               <Switch
                 id="quiz-show-explain"
+                checked={field.value}
+                onCheckedChange={field.onChange}
+              />
+            </div>
+          )}
+        />
+        <Controller
+          control={form.control}
+          name="shuffle_on_retry"
+          render={({ field }) => (
+            <div className="flex items-start justify-between gap-4 rounded-xl bg-white px-4 py-3">
+              <div className="min-w-0">
+                <Label htmlFor="quiz-shuffle-retry" className="text-slate-800">
+                  Đảo câu hỏi & đáp án khi làm lại
+                </Label>
+                <p className="mt-0.5 text-xs text-slate-500">
+                  Từ lần làm bài thứ 2 trở đi, thứ tự câu hỏi và đáp án sẽ được đảo ngẫu nhiên.
+                </p>
+              </div>
+              <Switch
+                id="quiz-shuffle-retry"
                 checked={field.value}
                 onCheckedChange={field.onChange}
               />
