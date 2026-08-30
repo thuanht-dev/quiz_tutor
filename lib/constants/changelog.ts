@@ -1,4 +1,10 @@
-export const CHANGELOG = [
+export interface ChangelogItem {
+  version: string;
+  date: string;
+  features: string[];
+}
+
+export const CHANGELOG: ChangelogItem[] = [
   {
     version: "1.1.0",
     date: "30/08/2026",
@@ -19,6 +25,4 @@ export const CHANGELOG = [
       "🎨 Giao diện thân thiện với trẻ em",
     ],
   },
-] as const;
-
-export type ChangelogItem = (typeof CHANGELOG)[number];
+];
