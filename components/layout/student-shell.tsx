@@ -7,6 +7,7 @@ import { APP_NAME } from "@/lib/constants";
 import { useGuestSession } from "@/stores/guest-session";
 import { useQuizSession } from "@/stores/quiz-session";
 import { GuestNameGate } from "@/features/student/guest-name-gate";
+import { ChangelogDialog } from "@/components/shared/changelog-dialog";
 
 export function StudentShell({ children }: { children: React.ReactNode }) {
   const displayName = useGuestSession((s) => s.displayName);
@@ -16,6 +17,7 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
 
   return (
     <div className="min-h-screen">
+      <ChangelogDialog />
       <header className="sticky top-0 z-20 border-b border-teal-100 bg-white/85 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
           <Link href="/" className="flex items-center gap-2">
