@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { X, Sparkles, CheckCircle2 } from "lucide-react";
+import { Sparkles, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,25 +11,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-interface ChangelogItem {
-  version: string;
-  date: string;
-  features: string[];
-}
-
-const CHANGELOG: ChangelogItem[] = [
-  {
-    version: "1.1.0",
-    date: "30/08/2026",
-    features: [
-      "🔀 Xáo trộn câu hỏi & đáp án khi làm lại bài (từ lần 2 trở đi)",
-      "🔊 Âm thanh động khi chọn đáp án và hoàn thành bài",
-      "🎯 Làm lại chỉ các câu sai sau một số lần chưa đạt",
-      "✨ Cải thiện giao diện kết quả bài làm",
-    ],
-  },
-];
+import { CHANGELOG } from "@/lib/constants/changelog";
 
 const STORAGE_KEY = "quiz_tutor_last_seen_version";
 
@@ -78,32 +60,28 @@ export function ChangelogDialog() {
 
         <div className="space-y-4">
           <AnimatePresence mode="wait">
-            {CHANGELOG.map((changelog, idx) => (
-              <motion.div
-                key={changelog.version}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: idx * 0.1 }}
-                className="rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 p-4"
-              >
-                <ul className="space-y-2.5">
-                  {changelog.features.map((feature, i) => (
-                    <motion.li
-                      key={i}
-                      initial={{ opacity: 0, x: -10 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: 0.15 + i * 0.08 }}
-                      className="flex items-start gap-2.5"
-                    >
-                      <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
-                      <span className="text-sm font-medium text-slate-700">
-                        {feature}
-                      </span>
-                    </motion.li>
-                  ))}
-                </ul>
-              </motion.div>
-            ))}
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="rounded-2xl bg-gradient-to-br from-teal-50 to-emerald-50 p-4"
+            >
+              <ul className="space-y-2.5">
+                {CHANGELOG[0].features.map((feature, i) => (
+                  <motion.li
+                    key={i}
+                    initial={{ opacity: 0, x: -10 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: 0.15 + i * 0.08 }}
+                    className="flex items-start gap-2.5"
+                  >
+                    <CheckCircle2 className="mt-0.5 size-4 shrink-0 text-emerald-600" />
+                    <span className="text-sm font-medium text-slate-700">
+                      {feature}
+                    </span>
+                  </motion.li>
+                ))}
+              </ul>
+            </motion.div>
           </AnimatePresence>
 
           <div className="flex justify-end gap-2 pt-2">
