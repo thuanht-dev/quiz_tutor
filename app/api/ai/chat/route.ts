@@ -55,7 +55,7 @@ async function callGeminiMultiTurn(
     systemInstruction: system,
     generationConfig: {
       temperature: 0.7,
-      maxOutputTokens: 500,
+      maxOutputTokens: 1024,
     },
   });
 

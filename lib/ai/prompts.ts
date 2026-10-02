@@ -170,7 +170,7 @@ function buildQuizContext(
 // Parsing
 // ---------------------------------------------------------------------------
 
-/** Parse JSON trả về từ Gemini — robust với markdown code block. */
+/** Parse JSON trả về từ Gemini — robust với markdown code block + truncated response. */
 export function parseExplainJson(raw: string): {
   explanation: string;
   wrong_reason: string;
@@ -180,6 +180,7 @@ export function parseExplainJson(raw: string): {
     .replace(/^```(?:json)?\s*/i, "")
     .replace(/\s*```$/i, "");
 
+  // 1. Thử parse JSON hoàn chỉnh
   try {
     const parsed = JSON.parse(cleaned);
     return {
@@ -187,8 +188,43 @@ export function parseExplainJson(raw: string): {
       wrong_reason: unwrapString(parsed.wrong_reason ?? ""),
     };
   } catch {
-    return { explanation: raw.trim(), wrong_reason: "" };
+    // fall through
   }
+
+  // 2. Fallback: JSON bị truncated — extract bằng regex
+  const truncated = extractFromTruncatedJson(cleaned);
+  if (truncated.explanation || truncated.wrong_reason) {
+    return truncated;
+  }
+
+  // 3. Cuối cùng: trả raw (AI có thể trả text thuần do fallback)
+  return { explanation: raw.trim(), wrong_reason: "" };
+}
+
+/** Parse JSON đang bị cắt dở — dùng regex để cứu vãn. */
+function extractFromTruncatedJson(raw: string): {
+  explanation: string;
+  wrong_reason: string;
+} {
+  if (!raw.startsWith("{")) {
+    return { explanation: "", wrong_reason: "" };
+  }
+  const result = { explanation: "", wrong_reason: "" };
+  for (const key of ["explanation", "wrong_reason"] as const) {
+    // Khớp: "key": "..." (chấp nhận xuôi, không cần đóng)
+    const re = new RegExp(
+      `"${key}"\\s*:\\s*"((?:\\\\.|[^"\\\\])*)"`,
+      "i"
+    );
+    const m = raw.match(re);
+    if (m && m[1]) {
+      result[key] = m[1]
+        .replace(/\\n/g, "\n")
+        .replace(/\\"/g, '"')
+        .replace(/\\\\/g, "\\");
+    }
+  }
+  return result;
 }
 
 /** Nếu value là string chứa JSON lồng (AI trả sai format), parse và lấy field. */

@@ -111,7 +111,7 @@ export async function POST(request: Request) {
       systemInstruction: system,
       generationConfig: {
         temperature: 0.6,
-        maxOutputTokens: 400,
+        maxOutputTokens: 1024,
         responseMimeType: "application/json",
       },
     });
@@ -121,7 +121,14 @@ export async function POST(request: Request) {
     for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await model.generateContent(user);
+        const candidate = result.response.candidates?.[0];
+        const finishReason = candidate?.finishReason;
         text = result.response.text();
+        // Nếu bị truncate vì MAX_TOKENS → retry với prompt ngắn hơn hoặc tăng tokens (đã tăng)
+        if (finishReason === "MAX_TOKENS" && attempt < 2) {
+          console.warn(`[ai/explain] Bị cắt ở attempt ${attempt + 1}, retry...`);
+          continue;
+        }
         if (text) break;
       } catch (err: unknown) {
         const isRetryable =
