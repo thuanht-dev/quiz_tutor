@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
@@ -107,6 +107,7 @@ export function QuizDetail({ quizId }: { quizId: string }) {
   useEffect(() => {
     if (!linkedQuestions) return;
     const ids = linkedQuestions.map((q) => q.id);
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setOrderedIds(ids);
     setSavedIds(ids);
   }, [linkedQuestions]);

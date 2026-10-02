@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { LogIn, Pencil, Volume2, VolumeX } from "lucide-react";
@@ -18,17 +18,17 @@ export function StudentShell({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen">
       <ChangelogDialog />
-      <header className="sticky top-0 z-20 border-b border-teal-100 bg-white/85 backdrop-blur">
+      <header className="sticky top-0 z-20 border-b border-indigo-100/80 bg-white/85 backdrop-blur-md shadow-xs">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-          <Link href="/" className="flex items-center gap-2">
-            <span className="flex size-10 items-center justify-center rounded-2xl bg-teal-600 font-display text-lg font-bold text-white shadow-md shadow-teal-200">
+          <Link href="/" className="flex items-center gap-2.5 group">
+            <span className="flex size-10 items-center justify-center rounded-2xl bg-gradient-to-tr from-indigo-600 to-blue-600 font-display text-lg font-bold text-white shadow-md shadow-indigo-300/40 transition-transform group-hover:scale-105">
               T
             </span>
             <div>
-              <p className="font-display text-xl font-bold text-teal-600">
+              <p className="font-display text-xl font-bold tracking-tight text-indigo-600">
                 {APP_NAME}
               </p>
-              <p className="text-xs text-slate-500">
+              <p className="text-xs font-medium text-slate-500">
                 {displayName ? `Xin chào, ${displayName}!` : "Học sinh"}
               </p>
             </div>

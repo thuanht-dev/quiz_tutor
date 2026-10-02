@@ -1,6 +1,5 @@
 "use client";
 
-import { useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -27,20 +26,15 @@ export function GuestNameGate({ children }: { children: React.ReactNode }) {
   const displayName = useGuestSession((s) => s.displayName);
   const hydrated = useGuestSession((s) => s.hydrated);
   const setGuest = useGuestSession((s) => s.setGuest);
-  const [ready, setReady] = useState(false);
-
-  useEffect(() => {
-    if (hydrated) setReady(true);
-  }, [hydrated]);
 
   const form = useForm<NameValues>({
     resolver: zodResolver(nameSchema),
     defaultValues: { displayName: displayName ?? "" },
   });
 
-  if (!ready) {
+  if (!hydrated) {
     return (
-      <div className="flex min-h-[50vh] items-center justify-center text-teal-700">
+      <div className="flex min-h-[50vh] items-center justify-center text-indigo-600">
         <Loader2 className="size-8 animate-spin" />
       </div>
     );
@@ -55,10 +49,13 @@ export function GuestNameGate({ children }: { children: React.ReactNode }) {
       <motion.div
         initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        className="kid-card w-full space-y-6 p-6 sm:p-8"
+        className="kid-card w-full space-y-6 p-6 sm:p-8 border-indigo-100 shadow-xl shadow-indigo-100/50"
       >
         <div>
-          <p className="font-display text-2xl font-bold text-teal-700">
+          <div className="inline-flex size-12 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-600 mb-3 shadow-inner">
+            <span className="font-display text-2xl font-bold">✨</span>
+          </div>
+          <p className="font-display text-2xl font-bold text-indigo-600">
             {APP_NAME}
           </p>
           <h1 className="mt-2 font-display text-xl font-bold text-slate-800">
@@ -79,7 +76,7 @@ export function GuestNameGate({ children }: { children: React.ReactNode }) {
             <Label htmlFor="guest-name">Tên của bạn</Label>
             <Input
               id="guest-name"
-              className="h-12 rounded-2xl text-base"
+              className="h-12 rounded-2xl text-base focus-visible:ring-indigo-500"
               placeholder="Ví dụ: Minh"
               autoFocus
               {...form.register("displayName")}
@@ -92,7 +89,7 @@ export function GuestNameGate({ children }: { children: React.ReactNode }) {
           </div>
           <Button
             type="submit"
-            className="kid-btn w-full bg-teal-600 text-white hover:bg-teal-700"
+            className="kid-btn w-full bg-gradient-to-r from-indigo-600 to-blue-600 text-white hover:from-indigo-700 hover:to-blue-700 shadow-md shadow-indigo-300/40"
           >
             Vào học
           </Button>

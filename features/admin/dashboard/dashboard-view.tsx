@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -93,8 +93,8 @@ export function DashboardView() {
       key: "attempt_count" as const,
       label: "Đã nộp / hết giờ",
       icon: GraduationCap,
-      accent: "bg-teal-500",
-      bg: "bg-teal-50",
+      accent: "bg-indigo-600",
+      bg: "bg-indigo-50",
     },
     {
       key: "quiz_count" as const,
@@ -163,7 +163,7 @@ export function DashboardView() {
           </h2>
           <Link
             href="/admin/attempts"
-            className="text-sm font-bold text-teal-600 hover:underline"
+            className="text-sm font-bold text-indigo-600 hover:underline"
           >
             Xem tất cả
           </Link>
@@ -208,7 +208,7 @@ export function DashboardView() {
                       <TableCell>
                         <Link
                           href={`/admin/attempts/${attempt.id}`}
-                          className="font-bold text-teal-700 hover:underline"
+                          className="font-bold text-indigo-600 hover:underline"
                         >
                           {name}
                         </Link>

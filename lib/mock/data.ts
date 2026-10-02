@@ -221,7 +221,7 @@ export const mockQuizQuestions: QuizQuestion[] = [
   { quiz_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb3", question_id: "cccccccc-cccc-cccc-cccc-ccccccccccc9", sort_order: 2 },
 ];
 
-export let mockAttempts: Attempt[] = [
+export const mockAttempts: Attempt[] = [
   {
     id: "eeeeeeee-eeee-eeee-eeee-eeeeeeeeeee1",
     quiz_id: "bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbb1",
@@ -287,7 +287,7 @@ export let mockAttempts: Attempt[] = [
   },
 ];
 
-export let mockAttemptAnswers: AttemptAnswer[] = [];
+export const mockAttemptAnswers: AttemptAnswer[] = [];
 
 export const mockPasswords: Record<string, string> = {
   admin: "admin123",

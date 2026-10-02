@@ -27,7 +27,7 @@ export function AttemptResultClient({ attemptId }: { attemptId: string }) {
 
   if (!guestId || isLoading) {
     return (
-      <div className="flex min-h-[40vh] items-center justify-center text-teal-700">
+      <div className="flex min-h-[40vh] items-center justify-center text-indigo-600">
         <Loader2 className="size-8 animate-spin" />
       </div>
     );

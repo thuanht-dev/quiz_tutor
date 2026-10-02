@@ -44,8 +44,8 @@ function NavLinks({ onNavigate }: { onNavigate?: () => void }) {
             className={cn(
               "flex items-center gap-3 rounded-2xl px-4 py-3 text-sm font-bold transition",
               active
-                ? "bg-teal-600 text-white shadow-md shadow-teal-200/80"
-                : "text-slate-600 hover:bg-teal-50 hover:text-teal-800"
+                ? "bg-indigo-600 text-white shadow-md shadow-indigo-300/40"
+                : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-800"
             )}
           >
             <Icon className="size-5" />
@@ -68,22 +68,22 @@ export function AdminShell({
 
   return (
     <div className="min-h-screen lg:grid lg:grid-cols-[260px_1fr]">
-      <aside className="hidden border-r border-teal-100 bg-white/80 p-5 lg:block">
+      <aside className="hidden border-r border-indigo-100/80 bg-white/80 p-5 lg:block">
         <div className="mb-8">
-          <p className="font-display text-2xl font-bold text-teal-700">
+          <p className="font-display text-2xl font-bold text-indigo-600">
             {APP_NAME}
           </p>
           <p className="text-sm text-slate-500">Quản trị gia sư</p>
         </div>
         <NavLinks />
         <form action={signOutAction} className="mt-8">
-          <div className="rounded-2xl bg-teal-50 p-4">
+          <div className="rounded-2xl bg-indigo-50/60 border border-indigo-100/60 p-4">
             <p className="font-bold text-slate-800">{profile.display_name}</p>
             <p className="text-xs text-slate-500">@{profile.username}</p>
             <Button
               type="submit"
               variant="ghost"
-              className="mt-3 w-full justify-start gap-2 text-slate-600"
+              className="mt-3 w-full justify-start gap-2 text-slate-600 hover:text-indigo-600 hover:bg-white/60"
             >
               <LogOut className="size-4" />
               Đăng xuất
@@ -93,8 +93,8 @@ export function AdminShell({
       </aside>
 
       <div className="flex min-h-screen flex-col">
-        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-teal-100 bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
-          <p className="font-display text-xl font-bold text-teal-600">
+        <header className="sticky top-0 z-20 flex items-center justify-between border-b border-indigo-100/80 bg-white/80 px-4 py-3 backdrop-blur lg:hidden">
+          <p className="font-display text-xl font-bold text-indigo-600">
             {APP_NAME}
           </p>
           <Sheet open={open} onOpenChange={setOpen}>
@@ -106,7 +106,7 @@ export function AdminShell({
               <Menu />
             </SheetTrigger>
             <SheetContent side="left" className="w-[280px] p-5">
-              <p className="mb-6 font-display text-xl font-bold text-teal-600">
+              <p className="mb-6 font-display text-xl font-bold text-indigo-600">
                 Menu
               </p>
               <NavLinks onNavigate={() => setOpen(false)} />

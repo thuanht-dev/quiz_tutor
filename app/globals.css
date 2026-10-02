@@ -51,42 +51,42 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
-/* Education palette: teal brand + soft mint surface (calm, tutor-friendly) */
+/* Education palette: Modern Indigo & Royal Blue + crisp surface (calm, focus-friendly, ed-tech) */
 :root {
-  --background: #f2f8f7;
-  --foreground: #134e4a;
+  --background: #f8fafc;
+  --foreground: #0f172a;
   --card: #ffffff;
-  --card-foreground: #134e4a;
+  --card-foreground: #0f172a;
   --popover: #ffffff;
-  --popover-foreground: #134e4a;
-  --primary: #0f766e;
-  --primary-foreground: #f0fdfa;
-  --secondary: #ccfbf1;
-  --secondary-foreground: #115e59;
-  --muted: #e6f4f1;
-  --muted-foreground: #5b6f6c;
-  --accent: #d1fae5;
-  --accent-foreground: #065f46;
-  --destructive: #e11d48;
-  --success: #059669;
-  --warning: #d97706;
-  --border: #c5e0db;
-  --input: #c5e0db;
-  --ring: #14b8a6;
-  --chart-1: #0d9488;
-  --chart-2: #059669;
-  --chart-3: #d97706;
-  --chart-4: #0ea5e9;
-  --chart-5: #64748b;
+  --popover-foreground: #0f172a;
+  --primary: #4f46e5;
+  --primary-foreground: #ffffff;
+  --secondary: #eef2ff;
+  --secondary-foreground: #4338ca;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --accent: #e0e7ff;
+  --accent-foreground: #3730a3;
+  --destructive: #ef4444;
+  --success: #10b981;
+  --warning: #f59e0b;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --ring: #6366f1;
+  --chart-1: #4f46e5;
+  --chart-2: #3b82f6;
+  --chart-3: #8b5cf6;
+  --chart-4: #06b6d4;
+  --chart-5: #10b981;
   --radius: 1rem;
   --sidebar: #ffffff;
-  --sidebar-foreground: #134e4a;
-  --sidebar-primary: #0f766e;
-  --sidebar-primary-foreground: #f0fdfa;
-  --sidebar-accent: #e6f4f1;
-  --sidebar-accent-foreground: #115e59;
-  --sidebar-border: #c5e0db;
-  --sidebar-ring: #14b8a6;
+  --sidebar-foreground: #0f172a;
+  --sidebar-primary: #4f46e5;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #eef2ff;
+  --sidebar-accent-foreground: #4338ca;
+  --sidebar-border: #e2e8f0;
+  --sidebar-ring: #6366f1;
 }
 
 @layer base {
@@ -96,9 +96,9 @@
   body {
     @apply bg-background text-foreground antialiased;
     background-image:
-      radial-gradient(circle at 12% 8%, rgba(45, 212, 191, 0.16), transparent 38%),
-      radial-gradient(circle at 88% 4%, rgba(52, 211, 153, 0.1), transparent 32%),
-      radial-gradient(circle at 70% 92%, rgba(20, 184, 166, 0.08), transparent 40%);
+      radial-gradient(circle at 12% 8%, rgba(99, 102, 241, 0.12), transparent 38%),
+      radial-gradient(circle at 88% 4%, rgba(59, 130, 246, 0.1), transparent 32%),
+      radial-gradient(circle at 70% 92%, rgba(139, 92, 246, 0.08), transparent 40%);
     background-attachment: fixed;
   }
   html {
@@ -111,10 +111,10 @@
     font-family: var(--font-fredoka), var(--font-nunito), sans-serif;
   }
   .kid-card {
-    @apply rounded-3xl border border-teal-100 bg-white/90 shadow-[0_12px_28px_-18px_rgba(15,118,110,0.45)] backdrop-blur;
+    @apply rounded-3xl border border-indigo-100/80 bg-white/95 shadow-[0_12px_28px_-18px_rgba(79,70,229,0.22)] backdrop-blur transition-all duration-200;
   }
   .kid-btn {
-    @apply h-12 rounded-2xl px-5 text-base font-bold;
+    @apply h-12 rounded-2xl px-5 text-base font-bold transition-all duration-150 active:scale-[0.98];
   }
 }
 
