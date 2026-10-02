@@ -292,7 +292,8 @@ export function ResultView({
     queryFn: () => isAIEnabled(),
     staleTime: 60_000,
   });
-  const aiEnabled = aiQuery.data === true;
+  // TODO: bật lại khi sửa xong — flip thành `aiQuery.data === true` khi muốn show
+  const aiEnabled = false;
 
   const message = passed
     ? "Đạt rồi! Giỏi quá!"
