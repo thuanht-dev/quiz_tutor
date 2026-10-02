@@ -1,7 +1,7 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
 /** Model dùng cho tính năng AI giải thích đáp án. */
-export const GEMINI_MODEL = "gemini-1.5-flash";
+export const GEMINI_MODEL = "gemini-flash-latest";
 
 export class GeminiNotConfiguredError extends Error {
   constructor() {

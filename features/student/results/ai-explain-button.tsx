@@ -301,7 +301,6 @@ export function AIExplainButton({
                   </div>
                 )}
 
-                <div ref={chatEndRef} />
               </div>
 
               {/* Input area */}
