@@ -118,15 +118,23 @@ export async function POST(request: Request) {
 
     let text = "";
     let lastError: unknown = null;
-    for (let attempt = 0; attempt < 2; attempt++) {
+    for (let attempt = 0; attempt < 3; attempt++) {
       try {
         const result = await model.generateContent(user);
         text = result.response.text();
         if (text) break;
-      } catch (err) {
+      } catch (err: unknown) {
+        const isRetryable =
+          err instanceof Error &&
+          (err.message.includes("503") ||
+            err.message.includes("429") ||
+            err.message.includes("RESOURCE_EXHAUSTED") ||
+            err.message.includes("high demand"));
         lastError = err;
-        if (attempt === 0) {
-          await new Promise((r) => setTimeout(r, 1500));
+        if (isRetryable && attempt < 2) {
+          await new Promise((r) => setTimeout(r, 2000));
+        } else if (!isRetryable) {
+          break;
         }
       }
     }
