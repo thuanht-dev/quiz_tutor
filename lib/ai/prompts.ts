@@ -183,10 +183,27 @@ export function parseExplainJson(raw: string): {
   try {
     const parsed = JSON.parse(cleaned);
     return {
-      explanation: String(parsed.explanation ?? "").trim(),
-      wrong_reason: String(parsed.wrong_reason ?? "").trim(),
+      explanation: unwrapString(parsed.explanation ?? ""),
+      wrong_reason: unwrapString(parsed.wrong_reason ?? ""),
     };
   } catch {
     return { explanation: raw.trim(), wrong_reason: "" };
   }
+}
+
+/** Nếu value là string chứa JSON lồng (AI trả sai format), parse và lấy field. */
+function unwrapString(value: unknown): string {
+  if (typeof value !== "string") return "";
+  const trimmed = value.trim();
+  if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) {
+    return trimmed;
+  }
+  try {
+    const nested = JSON.parse(trimmed);
+    if (typeof nested.explanation === "string") return nested.explanation;
+    if (typeof nested.answer === "string") return nested.answer;
+  } catch {
+    // Không parse được → trả raw
+  }
+  return trimmed;
 }
