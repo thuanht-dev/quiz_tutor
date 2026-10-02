@@ -1,4 +1,4 @@
-# Teddy Quiz — Quiz Web for Tutor
+# TLinh Quiz — Quiz Web for Tutor
 
 Website trắc nghiệm dành cho gia sư và học sinh tiểu học.
 

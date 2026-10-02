@@ -1,4 +1,4 @@
-export const APP_NAME = "Teddy Quiz";
+export const APP_NAME = "TLinh Quiz";
 export const STUDENT_EMAIL_DOMAIN = "students.local";
 
 export function usernameToEmail(username: string) {

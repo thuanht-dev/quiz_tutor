@@ -1,5 +1,5 @@
 /**
- * Bootstrap admin Auth user + profile for Teddy Quiz.
+ * Bootstrap admin Auth user + profile for TLinh Quiz.
  * Usage: npx tsx scripts/seed-auth.ts
  *
  * Requires .env.local with:
