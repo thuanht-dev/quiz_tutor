@@ -89,6 +89,29 @@ async function callGeminiMultiTurn(
 // Handler
 // ---------------------------------------------------------------------------
 
+/** Safety net: nếu Gemini trả JSON thuần, trích field "explanation" / "answer" nếu có. */
+function stripJsonIfPresent(raw: string): string {
+  const trimmed = raw.trim();
+  if (!trimmed.startsWith("{") || !trimmed.endsWith("}")) return raw;
+
+  try {
+    const parsed = JSON.parse(trimmed);
+    if (typeof parsed === "string") return parsed;
+    if (typeof parsed.explanation === "string") {
+      return (
+        parsed.explanation +
+        (typeof parsed.wrong_reason === "string" && parsed.wrong_reason
+          ? "\n\n" + parsed.wrong_reason
+          : "")
+      );
+    }
+    if (typeof parsed.answer === "string") return parsed.answer;
+  } catch {
+    // Không phải JSON hợp lệ — trả raw
+  }
+  return raw;
+}
+
 export async function POST(request: Request) {
   // 1. Validate
   let parsed: z.infer<typeof chatRequestSchema>;
@@ -141,7 +164,10 @@ export async function POST(request: Request) {
     });
 
     // 5. Call Gemini
-    const answer = await callGeminiMultiTurn(settings.gemini_api_key, system, contents);
+    let answer = await callGeminiMultiTurn(settings.gemini_api_key, system, contents);
+
+    // Safety net: AI đôi khi trả JSON khi câu hỏi ngắn → chỉ lấy phần text
+    answer = stripJsonIfPresent(answer);
 
     return NextResponse.json({ answer, model: GEMINI_MODEL });
   } catch (err) {
