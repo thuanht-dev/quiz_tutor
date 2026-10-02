@@ -130,10 +130,13 @@ function ReviewItem({
   index,
   answer,
   aiEnabled,
+  attempt,
 }: {
   index: number;
   answer: AttemptAnswer;
   aiEnabled: boolean;
+  /** Toàn bộ attempt — dùng để build quizContext cho AI chat. */
+  attempt: Attempt;
 }) {
   const question = answer.question;
   const options = question?.options ?? [];
@@ -230,6 +233,24 @@ function ReviewItem({
                 | null
             }
             isCorrect={answer.is_correct}
+            quizContext={
+              attempt.quiz && attempt.answers
+                ? {
+                    quizTitle: attempt.quiz.title,
+                    subjectName: attempt.quiz.subject?.name,
+                    questions: attempt.answers.map((a, idx) => ({
+                      index: idx,
+                      content: a.question?.content ?? "",
+                      options: (a.question?.options ?? []).map((o) => ({
+                        label: o.label as "A" | "B" | "C" | "D",
+                        content: o.content,
+                        isCorrect: o.is_correct,
+                      })),
+                    })),
+                    currentQuestionIndex: index,
+                  }
+                : undefined
+            }
           />
         </div>
       ) : null}
@@ -453,6 +474,7 @@ export function ResultView({
             index={i}
             answer={answer}
             aiEnabled={aiEnabled}
+            attempt={attempt}
           />
         ))}
       </div>
