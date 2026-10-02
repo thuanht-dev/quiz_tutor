@@ -1374,3 +1374,57 @@ export async function beginPlayQuiz(
 
   return { ...play, questions, attempt };
 }
+
+// ---------------------------------------------------------------------------
+// AI settings (admin) — lưu Gemini API key
+// ---------------------------------------------------------------------------
+import {
+  getGeminiApiKey as _getGeminiApiKey,
+  loadAISettings as _loadAISettings,
+  saveAISettings as _saveAISettings,
+  type AISettings,
+} from "@/lib/ai/settings";
+
+/** Public — dùng ở cả client flow để ẩn/hiện nút AI. */
+export async function isAIEnabled(): Promise<boolean> {
+  const settings = await _loadAISettings();
+  return settings.enabled && !!settings.gemini_api_key;
+}
+
+export async function getAISettings(): Promise<AISettings> {
+  const profile = await getCurrentProfile();
+  if (profile?.role !== "admin") throw new Error("Không có quyền");
+  return _loadAISettings();
+}
+
+export async function updateAISettings(
+  settings: Partial<AISettings>
+): Promise<AISettings> {
+  const profile = await getCurrentProfile();
+  if (profile?.role !== "admin") throw new Error("Không có quyền");
+  return _saveAISettings(settings);
+}
+
+/** Test Gemini API key bằng một request nhẹ. Chỉ admin. */
+export async function testGeminiApiKey(): Promise<{ ok: boolean; message: string }> {
+  const profile = await getCurrentProfile();
+  if (profile?.role !== "admin") throw new Error("Không có quyền");
+  const key = await _getGeminiApiKey();
+  if (!key) {
+    return { ok: false, message: "Chưa nhập API key" };
+  }
+  try {
+    const { createGeminiClient, GEMINI_MODEL } = await import(
+      "@/lib/ai/gemini-client"
+    );
+    const client = createGeminiClient(key);
+    const model = client.getGenerativeModel({ model: GEMINI_MODEL });
+    const result = await model.generateContent("ping");
+    const text = result.response.text();
+    if (!text) throw new Error("Gemini trả về rỗng");
+    return { ok: true, message: `Kết nối thành công — model ${GEMINI_MODEL}` };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return { ok: false, message: `Lỗi: ${message}` };
+  }
+}

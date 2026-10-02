@@ -1,7 +1,8 @@
-﻿"use client";
+"use client";
 
 import { useEffect, useMemo, useRef } from "react";
 import { motion } from "framer-motion";
+import { useQuery } from "@tanstack/react-query";
 import {
   CheckCircle2,
   Clock,
@@ -20,36 +21,49 @@ import { cn } from "@/lib/utils";
 import { formatDuration, scorePercent } from "@/lib/utils/format";
 import { playEncourageTone, playPassFanfare } from "@/lib/utils/sounds";
 import { useQuizSession } from "@/stores/quiz-session";
+import { isAIEnabled } from "@/lib/repositories";
 import type { Attempt, AttemptAnswer } from "@/types/database";
+import { AIExplainButton } from "@/features/student/results/ai-explain-button";
 
 const CONFETTI_COLORS = [
-  "#14B8A6",
-  "#22C55E",
-  "#F97316",
-  "#EAB308",
+  "#4F46E5",
+  "#3B82F6",
+  "#8B5CF6",
+  "#10B981",
+  "#F59E0B",
   "#EC4899",
-  "#0EA5E9",
-  "#F43F5E",
-  "#A855F7",
+  "#06B6D4",
+  "#6366F1",
 ];
+
+function pseudoRandom(seed: number) {
+  const x = Math.sin(seed + 1) * 10000;
+  return x - Math.floor(x);
+}
 
 function ConfettiBurst({ active, big }: { active: boolean; big: boolean }) {
   const pieces = useMemo(() => {
     if (!active) return [];
     const count = big ? 72 : 20;
     return Array.from({ length: count }).map((_, i) => {
-      const angle = (Math.PI * 2 * i) / count + Math.random() * 0.4;
-      const distance = big ? 120 + Math.random() * 220 : 60 + Math.random() * 100;
+      const r1 = pseudoRandom(i);
+      const r2 = pseudoRandom(i + 100);
+      const r3 = pseudoRandom(i + 200);
+      const r4 = pseudoRandom(i + 300);
+      const r5 = pseudoRandom(i + 400);
+      const r6 = pseudoRandom(i + 500);
+      const angle = (Math.PI * 2 * i) / count + r1 * 0.4;
+      const distance = big ? 120 + r2 * 220 : 60 + r2 * 100;
       return {
         id: i,
         x: Math.cos(angle) * distance,
         y: Math.sin(angle) * distance + (big ? 40 : 20),
-        delay: Math.random() * 0.35,
-        duration: 1.4 + Math.random() * 1.4,
+        delay: r3 * 0.35,
+        duration: 1.4 + r4 * 1.4,
         color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-        rotate: 200 + Math.random() * 520,
-        width: 6 + Math.random() * 7,
-        round: Math.random() > 0.55,
+        rotate: 200 + r5 * 520,
+        width: 6 + r6 * 7,
+        round: r1 > 0.55,
       };
     });
   }, [active, big]);
@@ -112,9 +126,18 @@ function ConfettiBurst({ active, big }: { active: boolean; big: boolean }) {
   );
 }
 
-function ReviewItem({ index, answer }: { index: number; answer: AttemptAnswer }) {
+function ReviewItem({
+  index,
+  answer,
+  aiEnabled,
+}: {
+  index: number;
+  answer: AttemptAnswer;
+  aiEnabled: boolean;
+}) {
   const question = answer.question;
   const options = question?.options ?? [];
+  const correctOption = options.find((o) => o.is_correct);
 
   return (
     <motion.div
@@ -149,7 +172,7 @@ function ReviewItem({ index, answer }: { index: number; answer: AttemptAnswer })
         <img
           src={question.image_url}
           alt="Hình minh họa"
-          className="max-h-56 w-full rounded-2xl bg-teal-50 object-contain"
+          className="max-h-56 w-full rounded-2xl border border-slate-100 bg-slate-50 object-contain p-2"
         />
       ) : null}
 
@@ -193,6 +216,23 @@ function ReviewItem({ index, answer }: { index: number; answer: AttemptAnswer })
           {question.explanation}
         </div>
       ) : null}
+
+      {aiEnabled && question?.id && correctOption ? (
+        <div className="flex justify-end">
+          <AIExplainButton
+            questionId={question.id}
+            studentLabel={
+              answer.selected_option_label as
+                | "A"
+                | "B"
+                | "C"
+                | "D"
+                | null
+            }
+            isCorrect={answer.is_correct}
+          />
+        </div>
+      ) : null}
     </motion.div>
   );
 }
@@ -225,6 +265,13 @@ export function ResultView({
     wrongAnswers.length > 0 &&
     (retryEligibility?.canRetryWrong ?? false);
   const failCount = retryEligibility?.failCount ?? 0;
+
+  const aiQuery = useQuery({
+    queryKey: ["ai-enabled"],
+    queryFn: () => isAIEnabled(),
+    staleTime: 60_000,
+  });
+  const aiEnabled = aiQuery.data === true;
 
   const message = passed
     ? "Đạt rồi! Giỏi quá!"
@@ -347,12 +394,12 @@ export function ResultView({
               <p className="mt-1 font-display text-lg font-bold text-rose-700">{wrong}</p>
               <p className="text-xs text-rose-600">Câu sai</p>
             </div>
-            <div className="rounded-2xl bg-teal-50 p-3">
-              <Clock className="mx-auto size-5 text-teal-500" />
-              <p className="mt-1 font-display text-lg font-bold text-teal-700">
+            <div className="rounded-2xl bg-indigo-50 p-3 border border-indigo-100/60">
+              <Clock className="mx-auto size-5 text-indigo-500" />
+              <p className="mt-1 font-display text-lg font-bold text-indigo-700">
                 {formatDuration(attempt.duration_seconds)}
               </p>
-              <p className="text-xs text-teal-600">Thời gian</p>
+              <p className="text-xs text-indigo-600">Thời gian</p>
             </div>
           </div>
 
@@ -361,7 +408,7 @@ export function ResultView({
               href="/"
               className={cn(
                 buttonVariants({ variant: "outline", size: "lg" }),
-                "kid-btn gap-2"
+                "kid-btn gap-2 border-slate-200 hover:bg-slate-50"
               )}
             >
               <Home className="size-4" /> Về trang chủ
@@ -369,14 +416,14 @@ export function ResultView({
             {wrongAnswers.length > 0 && canRetryWrong ? (
               <PendingLink
                 href={`/quizzes/${attempt.quiz_id}/play?retryFrom=${attempt.id}`}
-                className="kid-btn inline-flex items-center justify-center gap-2 bg-amber-500 text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-amber-600 hover:shadow-lg active:translate-y-0"
+                className="kid-btn inline-flex items-center justify-center gap-2 bg-amber-500 text-white shadow-md shadow-amber-300/40 transition-transform hover:-translate-y-0.5 hover:bg-amber-600 hover:shadow-lg active:translate-y-0"
               >
                 <RotateCcw className="size-4" /> Làm lại {wrongAnswers.length} câu sai
               </PendingLink>
             ) : null}
             <PendingLink
               href={`/quizzes/${attempt.quiz_id}/play`}
-              className="kid-btn inline-flex items-center justify-center gap-2 bg-teal-500 text-white shadow-md transition-transform hover:-translate-y-0.5 hover:bg-teal-600 hover:shadow-lg active:translate-y-0"
+              className="kid-btn inline-flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-md shadow-indigo-300/40 transition-transform hover:-translate-y-0.5 hover:bg-indigo-700 hover:shadow-lg active:translate-y-0"
             >
               <RotateCcw className="size-4" /> Làm lại cả bài
             </PendingLink>
@@ -395,13 +442,18 @@ export function ResultView({
 
       <div className="space-y-4">
         <h2 className="flex items-center gap-2 font-display text-xl font-bold text-slate-800">
-          <Sparkles className="size-5 text-teal-500" /> Xem lại bài làm
+          <Sparkles className="size-5 text-indigo-600" /> Xem lại bài làm
         </h2>
         <p className="text-sm text-slate-500">
           Bài làm đã được lưu — giáo viên có thể xem tại mục Bài làm.
         </p>
         {(attempt.answers ?? []).map((answer, i) => (
-          <ReviewItem key={answer.id} index={i} answer={answer} />
+          <ReviewItem
+            key={answer.id}
+            index={i}
+            answer={answer}
+            aiEnabled={aiEnabled}
+          />
         ))}
       </div>
     </div>
